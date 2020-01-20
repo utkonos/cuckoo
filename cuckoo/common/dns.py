@@ -2,7 +2,6 @@
 # Copyright (C) 2014-2016 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import select
 import socket
 import threading
@@ -22,11 +21,13 @@ HAVE_GEVENT = False
 
 # these are used by all resolvers
 DNS_TIMEOUT = 5
-DNS_TIMEOUT_VALUE = ""
+DNS_TIMEOUT_VALUE = ''
+
 
 def set_timeout(value):
     global DNS_TIMEOUT
     DNS_TIMEOUT = value
+
 
 def set_timeout_value(value):
     global DNS_TIMEOUT_VALUE
@@ -50,7 +51,7 @@ def with_timeout(func, args=(), kwargs={}):
         def run(self):
             try:
                 self.result = func(*args, **kwargs)
-            except Exception, e:
+            except Exception as e:
                 self.error = e
 
     it = ResultThread()
@@ -63,14 +64,16 @@ def with_timeout(func, args=(), kwargs={}):
             raise it.error
         return it.result
 
+
 def resolve_thread(name):
     return with_timeout(gethostbyname, (name,))
+
 
 def gethostbyname(name):
     try:
         ip = socket.gethostbyname(name)
     except socket.gaierror:
-        ip = ""
+        ip = ''
     return ip
 
 
@@ -103,6 +106,7 @@ def resolve_cares(name):
     careschan.destroy()
     return result.value
 
+
 # workaround until py3 nonlocal (for c-ares and gevent)
 class Resultholder:
     pass
@@ -129,6 +133,7 @@ def resolve_gevent_real(name):
     return result
 """
 
+
 # choose resolver automatically
 def resolve(name):
     if HAVE_CARES:
@@ -137,6 +142,7 @@ def resolve(name):
     #    return resolve_gevent(name)
     else:
         return resolve_thread(name)
+
 
 # another alias
 resolve_best = resolve
