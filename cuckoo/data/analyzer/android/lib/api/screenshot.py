@@ -2,7 +2,6 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 # Originally contributed by Check Point Software Technologies, Ltd.
-
 import math
 import filecmp
 
@@ -18,17 +17,20 @@ except:
     except:
         HAVE_PIL = False
 
+
 class Screenshot:
     """Get screenshots."""
 
     def have_pil(self):
         """Is Python Image Library installed?
+
         @return: installed status.
         """
         return HAVE_PIL
 
     def equal_old(self, img1, img2):
-        """Compares two screenshots using Root-Mean-Square Difference (RMS).
+        """Compare two screenshots using Root-Mean-Square Difference (RMS).
+
         @param img1: screenshot to compare.
         @param img2: screenshot to compare.
         @return: equal status.
@@ -42,9 +44,9 @@ class Screenshot:
         # this value is zero.
         diff = ImageChops.difference(image1, image2)
         h = diff.histogram()
-        sq = (value*((idx % 256)**2) for idx, value in enumerate(h))
+        sq = (value * ((idx % 256)**2) for idx, value in enumerate(h))
         sum_of_squares = sum(sq)
-        rms = math.sqrt(sum_of_squares/float(image1.size[0] * image2.size[1]))
+        rms = math.sqrt(sum_of_squares / float(image1.size[0] * image2.size[1]))
 
         # Might need to tweak the threshold.
         return rms < 8
