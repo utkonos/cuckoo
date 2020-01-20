@@ -2,7 +2,8 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-class Report(object):
+
+class Report:
     def __init__(self, report):
         self.report = report
 
@@ -16,20 +17,20 @@ class Report(object):
 
     @property
     def info(self):
-        return self.get("info") or {}
+        return self.get('info') or {}
 
     @property
     def path(self):
-        return self.get("info", "analysis_path")
+        return self.get('info', 'analysis_path')
 
     @property
     def feedback(self):
-        return self.get("feedback") or {}
+        return self.get('feedback') or {}
 
     @property
     def target(self):
-        return self.get("target")
+        return self.get('target')
 
     @property
     def errors(self):
-        return self.get("debug", "errors") or []
+        return self.get('debug', 'errors') or []
