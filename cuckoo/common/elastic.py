@@ -1,11 +1,11 @@
 # Copyright (C) 2017-2018 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 from cuckoo.common.config import config
 from cuckoo.common.exceptions import CuckooOperationalError
 
-class Elastic(object):
+
+class Elastic:
     def __init__(self):
         self.client = None
 
@@ -17,15 +17,15 @@ class Elastic(object):
         self.cuckoo_node = None
 
     def init(self):
-        self.enabled = config("reporting:elasticsearch:enabled")
-        self.hosts = config("reporting:elasticsearch:hosts")
-        self.timeout = config("reporting:elasticsearch:timeout")
-        self.calls = config("reporting:elasticsearch:calls")
-        self.index = config("reporting:elasticsearch:index")
+        self.enabled = config('reporting:elasticsearch:enabled')
+        self.hosts = config('reporting:elasticsearch:hosts')
+        self.timeout = config('reporting:elasticsearch:timeout')
+        self.calls = config('reporting:elasticsearch:calls')
+        self.index = config('reporting:elasticsearch:index')
         self.index_time_pattern = config(
-            "reporting:elasticsearch:index_time_pattern"
+            'reporting:elasticsearch:index_time_pattern'
         )
-        self.cuckoo_node = config("reporting:elasticsearch:cuckoo_node")
+        self.cuckoo_node = config('reporting:elasticsearch:cuckoo_node')
         return self.enabled
 
     def connect(self):
@@ -41,12 +41,13 @@ class Elastic(object):
             )
         except TypeError as e:
             raise CuckooOperationalError(
-                "Unable to connect to ElasticSearch due to an invalid ip:port "
-                "pair: %s" % e
+                'Unable to connect to ElasticSearch due to an invalid ip:port '
+                'pair: %s' % e
             )
         except elasticsearch.ConnectionError as e:
             raise CuckooOperationalError(
-                "Unable to connect to ElasticSearch: %s" % e
+                'Unable to connect to ElasticSearch: %s' % e
             )
+
 
 elastic = Elastic()
