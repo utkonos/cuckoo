@@ -1,7 +1,6 @@
 # Copyright (C) 2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import gridfs
 import logging
 import pymongo
@@ -12,7 +11,8 @@ from cuckoo.common.exceptions import CuckooCriticalError
 
 log = logging.getLogger(__name__)
 
-class Mongo(object):
+
+class Mongo:
     def __init__(self):
         self.client = None
         self.db = None
@@ -26,12 +26,12 @@ class Mongo(object):
         self.grid = None
 
     def init(self):
-        self.enabled = config("reporting:mongodb:enabled")
-        self.hostname = config("reporting:mongodb:host")
-        self.port = config("reporting:mongodb:port")
-        self.database = config("reporting:mongodb:db")
-        self.username = config("reporting:mongodb:username")
-        self.password = config("reporting:mongodb:password")
+        self.enabled = config('reporting:mongodb:enabled')
+        self.hostname = config('reporting:mongodb:host')
+        self.port = config('reporting:mongodb:port')
+        self.database = config('reporting:mongodb:db')
+        self.username = config('reporting:mongodb:username')
+        self.password = config('reporting:mongodb:password')
         return self.enabled
 
     def drop(self):
@@ -50,9 +50,9 @@ class Mongo(object):
             socket.create_connection((self.hostname, self.port), 1).close()
         except socket.error:
             log.warning(
-                "We're attempting to connect to MongoDB, but the connection "
-                "seems slow or MongoDB is simply offline. Please wait while "
-                "Cuckoo tries to connect.."
+                'We\'re attempting to connect to MongoDB, but the connection '
+                'seems slow or MongoDB is simply offline. Please wait while '
+                'Cuckoo tries to connect..'
             )
 
         try:
@@ -66,9 +66,10 @@ class Mongo(object):
             self.collection_names = self.db.collection_names()
         except pymongo.errors.PyMongoError as e:
             raise CuckooCriticalError(
-                "Unable to connect to MongoDB: %s. In order to operate "
-                "Cuckoo as per your configuration, a running MongoDB server "
-                "is required." % e
+                'Unable to connect to MongoDB: %s. In order to operate '
+                'Cuckoo as per your configuration, a running MongoDB server '
+                'is required.' % e
             )
+
 
 mongo = Mongo()
