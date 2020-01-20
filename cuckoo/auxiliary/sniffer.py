@@ -2,7 +2,6 @@
 # Copyright (C) 2014-2018 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import logging
 import os
 import subprocess
@@ -14,6 +13,7 @@ from cuckoo.misc import cwd, getuser, Popen
 
 log = logging.getLogger(__name__)
 
+
 class Sniffer(Auxiliary):
     def __init__(self):
         Auxiliary.__init__(self)
@@ -21,67 +21,67 @@ class Sniffer(Auxiliary):
 
     def start(self):
         if not self.machine.interface:
-            log.error("Network interface not defined, network capture aborted")
+            log.error('Network interface not defined, network capture aborted')
             return False
 
         # Handle special pcap dumping options.
-        if "nictrace" in self.machine.options:
+        if 'nictrace' in self.machine.options:
             return True
 
-        tcpdump = self.options["tcpdump"]
-        bpf = self.options["bpf"] or ""
-        file_path = cwd("storage", "analyses", "%s" % self.task.id, "dump.pcap")
+        tcpdump = self.options['tcpdump']
+        bpf = self.options['bpf'] or ''
+        file_path = cwd('storage', 'analyses', '%s' % self.task.id, 'dump.pcap')
 
         if not os.path.exists(tcpdump):
-            log.error("Tcpdump does not exist at path \"%s\", network "
-                      "capture aborted", tcpdump)
+            log.error('Tcpdump does not exist at path "%s", network '
+                      'capture aborted', tcpdump)
             return False
 
         # TODO: this isn't working. need to fix.
         # mode = os.stat(tcpdump)[stat.ST_MODE]
         # if (mode & stat.S_ISUID) == 0:
-        #    log.error("Tcpdump is not accessible from this user, "
-        #              "network capture aborted")
+        #    log.error('Tcpdump is not accessible from this user, '
+        #              'network capture aborted')
         #    return
 
         pargs = [
-            tcpdump, "-U", "-q", "-s", "0", "-n",
-            "-i", self.machine.interface,
+            tcpdump, '-U', '-q', '-s', '0', '-n',
+            '-i', self.machine.interface,
         ]
 
         # Trying to save pcap with the same user which cuckoo is running.
         user = getuser()
         if user:
-            pargs.extend(["-Z", user])
+            pargs.extend(['-Z', user])
 
-        pargs.extend(["-w", file_path])
-        pargs.extend(["host", self.machine.ip])
+        pargs.extend(['-w', file_path])
+        pargs.extend(['host', self.machine.ip])
 
-        if self.task.options.get("sniffer.debug") != "1":
+        if self.task.options.get('sniffer.debug') != '1':
             # Do not capture Agent traffic.
             pargs.extend([
-                "and", "not", "(",
-                "dst", "host", self.machine.ip, "and",
-                "dst", "port", "%s" % CUCKOO_GUEST_PORT,
-                ")", "and", "not", "(",
-                "src", "host", self.machine.ip, "and",
-                "src", "port", "%s" % CUCKOO_GUEST_PORT,
-                ")",
+                'and', 'not', '(',
+                'dst', 'host', self.machine.ip, 'and',
+                'dst', 'port', '%s' % CUCKOO_GUEST_PORT,
+                ')', 'and', 'not', '(',
+                'src', 'host', self.machine.ip, 'and',
+                'src', 'port', '%s' % CUCKOO_GUEST_PORT,
+                ')',
             ])
 
             # Do not capture ResultServer traffic.
             pargs.extend([
-                "and", "not", "(",
-                "dst", "host", self.machine.resultserver_ip, "and",
-                "dst", "port", "%s" % self.machine.resultserver_port,
-                ")", "and", "not", "(",
-                "src", "host", self.machine.resultserver_ip, "and",
-                "src", "port", "%s" % self.machine.resultserver_port,
-                ")",
+                'and', 'not', '(',
+                'dst', 'host', self.machine.resultserver_ip, 'and',
+                'dst', 'port', '%s' % self.machine.resultserver_port,
+                ')', 'and', 'not', '(',
+                'src', 'host', self.machine.resultserver_ip, 'and',
+                'src', 'port', '%s' % self.machine.resultserver_port,
+                ')',
             ])
 
             if bpf:
-                pargs.extend(["and", "(", bpf, ")"])
+                pargs.extend(['and', '(', bpf, ')'])
 
         try:
             self.proc = Popen(
@@ -89,13 +89,13 @@ class Sniffer(Auxiliary):
             )
         except (OSError, ValueError):
             log.exception(
-                "Failed to start sniffer (interface=%s, host=%s, pcap=%s)",
+                'Failed to start sniffer (interface=%s, host=%s, pcap=%s)',
                 self.machine.interface, self.machine.ip, file_path,
             )
             return False
 
         log.info(
-            "Started sniffer with PID %d (interface=%s, host=%s)",
+            'Started sniffer with PID %d (interface=%s, host=%s)',
             self.proc.pid, self.machine.interface, self.machine.ip
         )
         return True
@@ -103,27 +103,27 @@ class Sniffer(Auxiliary):
     def _check_output(self, out, err):
         if out:
             raise CuckooOperationalError(
-                "Potential error while running tcpdump, did not expect "
-                "standard output, got: %r." % out
+                'Potential error while running tcpdump, did not expect '
+                'standard output, got: %r.' % out
             )
 
         err_whitelist_start = (
-            "tcpdump: listening on ",
+            'tcpdump: listening on ',
         )
 
         err_whitelist_ends = (
-            "packet captured",
-            "packets captured",
-            "packet received by filter",
-            "packets received by filter",
-            "packet dropped by kernel",
-            "packets dropped by kernel",
-            "packet dropped by interface",
-            "packets dropped by interface",
-            "dropped privs to root",
+            'packet captured',
+            'packets captured',
+            'packet received by filter',
+            'packets received by filter',
+            'packet dropped by kernel',
+            'packets dropped by kernel',
+            'packet dropped by interface',
+            'packets dropped by interface',
+            'dropped privs to root',
         )
 
-        for line in err.split("\n"):
+        for line in err.split('\n'):
             if not line or line.startswith(err_whitelist_start):
                 continue
 
@@ -131,12 +131,13 @@ class Sniffer(Auxiliary):
                 continue
 
             raise CuckooOperationalError(
-                "Potential error while running tcpdump, did not expect "
-                "the following standard error output: %r." % line
+                'Potential error while running tcpdump, did not expect '
+                'the following standard error output: %r.' % line
             )
 
     def stop(self):
         """Stop sniffing.
+
         @return: operation status.
         """
         # The tcpdump process was never started in the first place.
@@ -148,12 +149,12 @@ class Sniffer(Auxiliary):
         if self.proc.poll():
             out, err = self.proc.communicate()
             raise CuckooOperationalError(
-                "Error running tcpdump to sniff the network traffic during "
-                "the analysis; stdout = %r and stderr = %r. Did you enable "
-                "the extra capabilities to allow running tcpdump as non-root "
-                "user and disable AppArmor properly (the latter only applies "
-                "to Ubuntu-based distributions with AppArmor, see also %s)?" %
-                (out, err, faq("permission-denied-for-tcpdump"))
+                'Error running tcpdump to sniff the network traffic during '
+                'the analysis; stdout = %r and stderr = %r. Did you enable '
+                'the extra capabilities to allow running tcpdump as non-root '
+                'user and disable AppArmor properly (the latter only applies '
+                'to Ubuntu-based distributions with AppArmor, see also %s)?' %
+                (out, err, faq('permission-denied-for-tcpdump'))
             )
 
         try:
@@ -161,12 +162,12 @@ class Sniffer(Auxiliary):
         except:
             try:
                 if not self.proc.poll():
-                    log.debug("Killing sniffer")
+                    log.debug('Killing sniffer')
                     self.proc.kill()
             except OSError as e:
-                log.debug("Error killing sniffer: %s. Continue", e)
+                log.debug('Error killing sniffer: %s. Continue', e)
             except Exception as e:
-                log.exception("Unable to stop the sniffer with pid %d: %s",
+                log.exception('Unable to stop the sniffer with pid %d: %s',
                               self.proc.pid, e)
 
         # Ensure expected output was received from tcpdump.
