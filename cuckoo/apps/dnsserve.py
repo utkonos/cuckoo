@@ -1,28 +1,28 @@
 # Copyright (C) 2016-2018 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import logging
 import socket
 import sys
 
-logging.getLogger("scapy.loading").setLevel(logging.ERROR)
+logging.getLogger('scapy.loading').setLevel(logging.ERROR)
 log = logging.getLogger(__name__)
+
 
 def cuckoo_dnsserve(host, port, nxdomain, hardcode):
     try:
         from scapy.layers.dns import DNS, DNSQR, DNSRR
     except ImportError:
         sys.exit(
-            "Currently the DNS serve script is not available due to issues "
-            "in upstream Scapy for Windows "
-            "(https://github.com/secdev/scapy/issues/111)."
+            'Currently the DNS serve script is not available due to issues '
+            'in upstream Scapy for Windows '
+            '(https://github.com/secdev/scapy/issues/111).'
         )
 
     udps = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udps.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     udps.bind((host, port))
-    log.info("Listening for DNS queries at %s:%d", host, port)
+    log.info('Listening for DNS queries at %s:%d', host, port)
 
     while True:
         data, addr = udps.recvfrom(1024)
@@ -51,17 +51,17 @@ def cuckoo_dnsserve(host, port, nxdomain, hardcode):
                     rrname=p.qd[0].qname, ttl=60, rdlen=4, rdata=answer_ip
                 )
 
-                log.debug("IN A %s -> %s.", p.qd[0].qname, answer_ip)
+                log.debug('IN A %s -> %s.', p.qd[0].qname, answer_ip)
         # IN PTR, we reply with NXDOMAIN.
         elif p.opcode == 0 and p[DNSQR].qtype == 12 and p[DNSQR].qclass == 1:
             rp.ancount = 0
             rp.rcode = 3
-            log.info("IN PTR %s -> NXDOMAIN.", p.qd[0].qname)
+            log.info('IN PTR %s -> NXDOMAIN.', p.qd[0].qname)
         else:
             rp.ancount = 0
             rp.rcode = 2
             log.warn(
-                "Unhandled query %s for %s/%s,%s - answering with servfail.",
+                'Unhandled query %s for %s/%s,%s - answering with servfail.',
                 p.opcode, p.qd[0].qname, p[DNSQR].qtype, p[DNSQR].qclass
             )
 
