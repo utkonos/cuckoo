@@ -2,7 +2,6 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 # Originally contributed by Check Point Software Technologies, Ltd.
-
 import time
 import logging
 import StringIO
@@ -14,6 +13,7 @@ from lib.api.screenshot import Screenshot
 
 log = logging.getLogger(__name__)
 SHOT_DELAY = 2
+
 
 class Screenshots(Auxiliary, Thread):
     """Take screenshots."""
@@ -28,6 +28,7 @@ class Screenshots(Auxiliary, Thread):
 
     def run(self):
         """Run screenshotting.
+
         @return: operation status.
         """
         img_counter = 0
@@ -37,7 +38,7 @@ class Screenshots(Auxiliary, Thread):
             time.sleep(SHOT_DELAY)
 
             try:
-                filename = "screenshot%s.jpg" % str(img_counter)
+                filename = 'screenshot%s.jpg' % str(img_counter)
                 img_current = take_screenshot(filename)
                 if img_last:
                     if Screenshot().equal(img_last, img_current):
@@ -46,7 +47,7 @@ class Screenshots(Auxiliary, Thread):
                 file = open(img_current, 'r')
                 tmpio = StringIO.StringIO(file.read())
                 # now upload to host from the StringIO
-                nf = NetlogFile("shots/%s.jpg" % str(img_counter).rjust(4, "0"))
+                nf = NetlogFile('shots/%s.jpg' % str(img_counter).rjust(4, '0'))
 
                 for chunk in tmpio:
                     nf.sock.sendall(chunk)
@@ -57,7 +58,7 @@ class Screenshots(Auxiliary, Thread):
                 img_last = img_current
 
             except IOError as e:
-                log.error("Cannot take screenshot: %s", e)
+                log.error('Cannot take screenshot: %s', e)
                 continue
 
         return True
