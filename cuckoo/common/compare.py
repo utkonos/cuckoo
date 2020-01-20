@@ -2,21 +2,22 @@
 # Copyright (C) 2014-2016 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import os
 import collections
 
 from cuckoo.misc import cwd
 
-ANALYSIS_ROOT = cwd("storage", "analyses")
+ANALYSIS_ROOT = cwd('storage', 'analyses')
+
 
 def behavior_categories_percent(calls):
     catcounts = collections.defaultdict(lambda: 0)
 
     for call in calls:
-        catcounts[call.get("category", "none")] += 1
+        catcounts[call.get('category', 'none')] += 1
 
     return dict(catcounts)
+
 
 def combine_behavior_percentages(stats):
     # get all categories present
@@ -41,13 +42,15 @@ def combine_behavior_percentages(stats):
 
     return percentages
 
+
 def iter_task_process_logfiles(tid):
-    tpath = os.path.join(ANALYSIS_ROOT, str(tid), "logs")
+    tpath = os.path.join(ANALYSIS_ROOT, str(tid), 'logs')
 
     for fname in os.listdir(tpath):
         fpath = os.path.join(tpath, fname)
-        pid = int(fname.split(".")[0])
+        pid = int(fname.split('.')[0])
         yield (pid, fpath)
+
 
 def helper_percentages_storage(tid1, tid2):
     counts = {}
@@ -64,7 +67,8 @@ def helper_percentages_storage(tid1, tid2):
 
     return combine_behavior_percentages(counts)
 
-def helper_percentages_mongo(results_db, tid1, tid2, ignore_categories=["misc"]):
+
+def helper_percentages_mongo(results_db, tid1, tid2, ignore_categories=['misc']):
     counts = {}
 
     for tid in[tid1, tid2]:
@@ -72,24 +76,24 @@ def helper_percentages_mongo(results_db, tid1, tid2, ignore_categories=["misc"])
 
         pids_calls = results_db.analysis.find_one(
             {
-                "info.id": int(tid),
+                'info.id': int(tid),
             },
             {
-                "behavior.processes.pid": 1,
-                "behavior.processes.calls": 1
+                'behavior.processes.pid': 1,
+                'behavior.processes.calls': 1
             }
         )
 
         if not pids_calls:
             continue
 
-        for pdoc in pids_calls["behavior"]["processes"]:
-            pid = pdoc["pid"]
+        for pdoc in pids_calls['behavior']['processes']:
+            pid = pdoc['pid']
             counts[tid][pid] = {}
 
-            for coid in pdoc["calls"]:
-                chunk = results_db.calls.find_one({"_id": coid}, {"calls.category": 1})
-                category_counts = behavior_categories_percent(chunk["calls"])
+            for coid in pdoc['calls']:
+                chunk = results_db.calls.find_one({'_id': coid}, {'calls.category': 1})
+                category_counts = behavior_categories_percent(chunk['calls'])
                 for cat, count in category_counts.items():
                     if cat in ignore_categories:
                         continue
