@@ -2,7 +2,6 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 # Originally contributed by Check Point Software Technologies, Ltd.
-
 import logging
 import socket
 import time
@@ -11,29 +10,31 @@ from lib.core.config import Config
 
 log = logging.getLogger(__name__)
 
-BUFSIZE = 1024*1024
+BUFSIZE = 1024 * 1024
+
 
 def upload_to_host(file_path, dump_path):
     nc = infd = None
     try:
         nc = NetlogFile(dump_path)
 
-        infd = open(file_path, "rb")
+        infd = open(file_path, 'rb')
         buf = infd.read(BUFSIZE)
         while buf:
             nc.send(buf, retry=False)
             buf = infd.read(BUFSIZE)
     except Exception as e:
-        log.error("Exception uploading file %s to host: %s", file_path, e)
+        log.error('Exception uploading file %s to host: %s', file_path, e)
     finally:
         if infd:
             infd.close()
         if nc:
             nc.close()
 
-class NetlogConnection(object):
-    def __init__(self, proto=""):
-        config = Config(cfg="analysis.conf")
+
+class NetlogConnection:
+    def __init__(self, proto=''):
+        config = Config(cfg='analysis.conf')
         self.hostip, self.hostport = config.ip, config.port
         self.sock = None
         self.proto = proto
@@ -57,14 +58,14 @@ class NetlogConnection(object):
 
         try:
             self.sock.sendall(data)
-        except socket.error as e:
+        except socket.error:
             if retry:
                 self.connect()
                 self.send(data, retry=False)
             else:
                 raise
         except Exception as e:
-            log.error("Unhandled exception in NetlogConnection: %s", str(e))
+            log.error('Unhandled exception in NetlogConnection: %s', str(e))
             # We really have nowhere to log this, if the netlog connection
             # does not work, we can assume that any logging won't work either.
             # So we just fail silently.
@@ -76,18 +77,20 @@ class NetlogConnection(object):
         except Exception:
             pass
 
+
 class NetlogFile(NetlogConnection):
     def __init__(self, filepath):
         self.filepath = filepath
-        NetlogConnection.__init__(self, proto="FILE\n{0}\n".format(self.filepath))
+        NetlogConnection.__init__(self, proto='FILE\n{0}\n'.format(self.filepath))
         self.connect()
+
 
 class NetlogHandler(logging.Handler, NetlogConnection):
     def __init__(self):
         logging.Handler.__init__(self)
-        NetlogConnection.__init__(self, proto="LOG\n")
+        NetlogConnection.__init__(self, proto='LOG\n')
         self.connect()
 
     def emit(self, record):
         msg = self.format(record)
-        self.send("{0}\n".format(msg))
+        self.send('{0}\n'.format(msg))

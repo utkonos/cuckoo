@@ -3,8 +3,10 @@
 # See the file 'docs/LICENSE' for copying permission.
 # Originally contributed by Check Point Software Technologies, Ltd.
 
+
 class CuckooError(Exception):
     pass
+
 
 class CuckooPackageError(Exception):
     pass

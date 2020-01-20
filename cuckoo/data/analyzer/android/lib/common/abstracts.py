@@ -3,7 +3,8 @@
 # See the file 'docs/LICENSE' for copying permission.
 # Originally contributed by Check Point Software Technologies, Ltd.
 
-class Package(object):
+
+class Package:
     """Base abstact analysis package."""
 
     def __init__(self, options={}):
@@ -36,5 +37,6 @@ class Package(object):
         """
         raise NotImplementedError
 
-class Auxiliary(object):
+
+class Auxiliary:
     pass
