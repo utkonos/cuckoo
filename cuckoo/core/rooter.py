@@ -1,7 +1,6 @@
 # Copyright (C) 2015-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import json
 import logging
 import os.path
@@ -15,11 +14,12 @@ log = logging.getLogger(__name__)
 unixpath = tempfile.mktemp()
 lock = threading.Lock()
 
+
 def rooter(command, *args, **kwargs):
-    if not os.path.exists(config("cuckoo:cuckoo:rooter")):
+    if not os.path.exists(config('cuckoo:cuckoo:rooter')):
         log.critical(
-            "Unable to passthrough root command (%s) as the rooter "
-            "unix socket doesn't exist.", command
+            'Unable to passthrough root command (%s) as the rooter '
+            'unix socket doesn\'t exist.', command
         )
         return
 
@@ -33,26 +33,26 @@ def rooter(command, *args, **kwargs):
     s.bind(unixpath)
 
     try:
-        s.connect(config("cuckoo:cuckoo:rooter"))
+        s.connect(config('cuckoo:cuckoo:rooter'))
     except socket.error as e:
         log.critical(
-            "Unable to passthrough root command as we're unable to "
-            "connect to the rooter unix socket: %s.", e
+            'Unable to passthrough root command as we\'re unable to '
+            'connect to the rooter unix socket: %s.', e
         )
         lock.release()
         return
 
     s.send(json.dumps({
-        "command": command,
-        "args": args,
-        "kwargs": kwargs,
+        'command': command,
+        'args': args,
+        'kwargs': kwargs,
     }))
 
     ret = json.loads(s.recv(0x10000))
 
     lock.release()
 
-    if ret["exception"]:
-        log.warning("Rooter returned error: %s", ret["exception"])
+    if ret['exception']:
+        log.warning('Rooter returned error: %s', ret['exception'])
 
-    return ret["output"]
+    return ret['output']
