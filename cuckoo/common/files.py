@@ -1,7 +1,6 @@
 # Copyright (C) 2016-2018 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import os
 import hashlib
 import tempfile
@@ -13,29 +12,32 @@ from cuckoo.common.config import config
 from cuckoo.common.exceptions import CuckooOperationalError
 from cuckoo.misc import getuser
 
+
 def temppath():
     """Return the true temporary directory."""
-    tmppath = config("cuckoo:cuckoo:tmppath")
+    tmppath = config('cuckoo:cuckoo:tmppath')
 
     # Backwards compatibility with older configuration.
-    if not tmppath or tmppath == "/tmp":
+    if not tmppath or tmppath == '/tmp':
         return os.path.join(
-            tempfile.gettempdir(), "cuckoo-tmp-%s" % getuser()
+            tempfile.gettempdir(), 'cuckoo-tmp-%s' % getuser()
         )
 
     return tmppath
 
+
 def open_exclusive(path, mode='wb', bufsize=-1):
     """Open a file with O_EXCL, failing if it already exists
     [In Python 3, use open with x]"""
-    fd = os.open(path, os.O_CREAT|os.O_EXCL|os.O_WRONLY, 0644)
+    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0644)
     try:
         return os.fdopen(fd, mode, bufsize)
     except:
         os.close(fd)
         raise
 
-class Storage(object):
+
+class Storage:
     @staticmethod
     def get_filename_from_path(path):
         """Cross-platform filename extraction from path.
@@ -45,9 +47,10 @@ class Storage(object):
         dirpath, filename = ntpath.split(path)
         return filename if filename else ntpath.basename(dirpath)
 
+
 class Folders(Storage):
     @staticmethod
-    def create(root=".", folders=None):
+    def create(root='.', folders=None):
         """Create a directory or multiple directories.
         @param root: root path.
         @param folders: folders list to be created.
@@ -58,7 +61,7 @@ class Folders(Storage):
             root = os.path.join(*root)
 
         if folders is None:
-            folders = [""]
+            folders = ['']
         elif isinstance(folders, basestring):
             folders = folders,
 
@@ -72,7 +75,7 @@ class Folders(Storage):
                         # Race condition, ignore
                         continue
                     raise CuckooOperationalError(
-                        "Unable to create folder: %s" % folder_path
+                        'Unable to create folder: %s' % folder_path
                     )
 
     @staticmethod
@@ -97,8 +100,9 @@ class Folders(Storage):
                 shutil.rmtree(folder)
             except OSError:
                 raise CuckooOperationalError(
-                    "Unable to delete folder: %s" % folder
+                    'Unable to delete folder: %s' % folder
                 )
+
 
 class Files(Storage):
     @staticmethod
@@ -108,10 +112,10 @@ class Files(Storage):
         @param path: directory path to store the file
         """
         fd, filepath = tempfile.mkstemp(
-            prefix="upload_", dir=path or temppath()
+            prefix='upload_', dir=path or temppath()
         )
 
-        if hasattr(content, "read"):
+        if hasattr(content, 'read'):
             chunk = content.read(1024)
             while chunk:
                 os.write(fd, chunk)
@@ -141,8 +145,8 @@ class Files(Storage):
             root = os.path.join(*root)
 
         filepath = os.path.join(root, filename)
-        with open(filepath, "wb") as f:
-            if hasattr(content, "read"):
+        with open(filepath, 'wb') as f:
+            if hasattr(content, 'read'):
                 chunk = content.read(1024 * 1024)
                 while chunk:
                     f.write(chunk)
@@ -168,7 +172,7 @@ class Files(Storage):
         @param path: file path
         @return: computed hash string
         """
-        f = open(filepath, "rb")
+        f = open(filepath, 'rb')
         h = method()
         while True:
             buf = f.read(1024 * 1024)
