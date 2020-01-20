@@ -1,7 +1,6 @@
 # Copyright (C) 2016-2018 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import io
 import json
 import logging
@@ -17,19 +16,20 @@ from cuckoo.misc import version, cwd
 
 log = logging.getLogger(__name__)
 
-class CuckooFeedback(object):
+
+class CuckooFeedback:
     """Contact Cuckoo HQ with feedback & optional analysis dump."""
-    endpoint = "https://feedback.cuckoosandbox.org/api/submit/"
+    endpoint = 'https://feedback.cuckoosandbox.org/api/submit/'
     exc_whitelist = (
         CuckooFeedbackError,
     )
 
     def enabled(self):
-        return config("cuckoo:feedback:enabled")
+        return config('cuckoo:feedback:enabled')
 
     def send_exception(self, exception, request):
-        """
-        To be used during exception handling.
+        """To be used during exception handling.
+
         @param exception: The exception class
         @param request: Django request object
         @return:
@@ -38,22 +38,22 @@ class CuckooFeedback(object):
             return
 
         feedback = CuckooFeedbackObject(
-            automated=True, message="Exception encountered: %s" % exception
+            automated=True, message='Exception encountered: %s' % exception
         )
 
         if isinstance(exception, self.exc_whitelist):
-            log.debug("A whitelisted exception occurred: %s", exception)
+            log.debug('A whitelisted exception occurred: %s', exception)
             return
 
         # Ignore 404 exceptions regarding ".map" development files.
         from django.http import Http404
-        if isinstance(exception, Http404) and ".map" in exception.message:
+        if isinstance(exception, Http404) and '.map' in exception.message:
             return
 
         from django.template import TemplateSyntaxError, TemplateDoesNotExist
         if isinstance(exception, (TemplateSyntaxError, TemplateDoesNotExist)):
             feedback.add_error(
-                "A Django-related exception occurred: %s" % exception
+                'A Django-related exception occurred: %s' % exception
             )
 
         feedback.add_traceback()
@@ -65,20 +65,20 @@ class CuckooFeedback(object):
             config = True
 
         if request:
-            if hasattr(request, "resolver_match") and request.resolver_match:
-                if request.method == "POST" and request.is_ajax():
+            if hasattr(request, 'resolver_match') and request.resolver_match:
+                if request.method == 'POST' and request.is_ajax():
                     kwargs = json.loads(request.body)
                 else:
                     kwargs = request.resolver_match.kwargs
-            elif request.method == "GET":
+            elif request.method == 'GET':
                 kwargs = request.GET
-            elif request.method == "POST":
+            elif request.method == 'POST':
                 kwargs = request.POST
             else:
                 kwargs = {}
 
             task_id = (
-                kwargs.get("task_id", kwargs.get("analysis_id"))
+                kwargs.get('task_id', kwargs.get('analysis_id'))
             )
 
             if task_id:
@@ -103,7 +103,7 @@ class CuckooFeedback(object):
         if json_report:
             if not task_id or not isinstance(task_id, int):
                 raise CuckooFeedbackError(
-                    "An incorrect Task ID has been provided: %s!" % task_id
+                    'An incorrect Task ID has been provided: %s!' % task_id
                 )
 
             feedback.include_report_web(task_id)
@@ -116,19 +116,19 @@ class CuckooFeedback(object):
             feedback.validate()
         except CuckooFeedbackError as e:
             raise CuckooFeedbackError(
-                "Could not validate feedback object: %s" % e
+                'Could not validate feedback object: %s' % e
             )
 
         headers = {
-            "Accept": "application/json",
-            "User-Agent": "Cuckoo %s" % version
+            'Accept': 'application/json',
+            'User-Agent': 'Cuckoo %s' % version
         }
 
         try:
             r = requests.post(
                 self.endpoint,
                 data={
-                    "feedback": json.dumps(feedback.to_dict()),
+                    'feedback': json.dumps(feedback.to_dict()),
                 },
                 files=feedback.to_files(),
                 headers=headers
@@ -136,27 +136,28 @@ class CuckooFeedback(object):
             r.raise_for_status()
 
             obj = r.json()
-            if not obj.get("status"):
-                raise CuckooFeedbackError(obj["message"])
-            return obj["feedback_id"]
+            if not obj.get('status'):
+                raise CuckooFeedbackError(obj['message'])
+            return obj['feedback_id']
         except requests.RequestException as e:
             raise CuckooFeedbackError(
-                "Invalid response from Cuckoo feedback server: %s" % e
+                'Invalid response from Cuckoo feedback server: %s' % e
             )
         except CuckooFeedbackError as e:
             raise CuckooFeedbackError(
-                "Cuckoo feedback error while trying to send: %s" % e
+                'Cuckoo feedback error while trying to send: %s' % e
             )
 
-class CuckooFeedbackObject(object):
+
+class CuckooFeedbackObject:
     """Feedback object."""
     export_files = [
-        "analysis.log",
-        "cuckoo.log",
-        "dump.pcap",
-        "tlsmaster.txt",
-        ("logs", ".bson"),
-        ("shots", ".jpg"),
+        'analysis.log',
+        'cuckoo.log',
+        'dump.pcap',
+        'tlsmaster.txt',
+        ('logs', '.bson'),
+        ('shots', '.jpg'),
     ]
 
     def __init__(self, message=None, email=None, name=None, company=None,
@@ -164,9 +165,9 @@ class CuckooFeedbackObject(object):
         self.automated = automated
         self.message = message
         self.contact = {
-            "name": name or config("cuckoo:feedback:name"),
-            "company": company or config("cuckoo:feedback:company"),
-            "email": email or config("cuckoo:feedback:email"),
+            'name': name or config('cuckoo:feedback:name'),
+            'company': company or config('cuckoo:feedback:company'),
+            'email': email or config('cuckoo:feedback:email'),
         }
         self.errors = []
         self.traceback = None
@@ -180,19 +181,19 @@ class CuckooFeedbackObject(object):
             self.add_error(error)
 
         # Analysis information.
-        if report.target["category"] == "file":
-            self.info["file"] = report.target["file"]
-        elif report.target["category"] == "url":
-            self.info["url"] = report.target["url"]
+        if report.target['category'] == 'file':
+            self.info['file'] = report.target['file']
+        elif report.target['category'] == 'url':
+            self.info['url'] = report.target['url']
 
-        self.info["category"] = report.target["category"]
+        self.info['category'] = report.target['category']
         self.report = report
 
     def include_report_web(self, task_id):
         from cuckoo.web.controllers.analysis.analysis import AnalysisController
         from django.http import Http404
         try:
-            report = Report(AnalysisController.get_report(task_id)["analysis"])
+            report = Report(AnalysisController.get_report(task_id)['analysis'])
         except Http404:
             # No report available so ignoring the rest of this function.
             return
@@ -203,7 +204,7 @@ class CuckooFeedbackObject(object):
         """Return a list of all files of interest from an analysis."""
         ret = []
         for name in self.export_files:
-            if isinstance(name, basestring):
+            if isinstance(name, str):
                 filepath = os.path.join(dirpath, name)
                 if os.path.isfile(filepath):
                     ret.append((name, filepath))
@@ -221,36 +222,36 @@ class CuckooFeedbackObject(object):
                         if not os.path.isfile(filepath):
                             continue
 
-                        filename = "%s/%s" % (dirname, filename)
+                        filename = '%s/%s' % (dirname, filename)
                         ret.append((filename, filepath))
                 continue
 
             raise RuntimeError(
-                "Unknown export file defined: %s!" % name
+                'Unknown export file defined: %s!' % name
             )
         self.export = ret
 
     def include_analysis(self, memdump=False):
         if not self.report:
             raise CuckooFeedbackError(
-                "Report must be included first when including the analysis."
+                'Report must be included first when including the analysis.'
             )
 
-        if "analysis_path" not in self.report.info:
+        if 'analysis_path' not in self.report.info:
             raise CuckooFeedbackError(
-                "Can't include the entire analysis for this analysis as the "
-                "analysis path isn't known."
+                'Can\'t include the entire analysis for this analysis as the '
+                'analysis path isn\'t known.'
             )
 
-        if not os.path.isdir(self.report.info["analysis_path"]):
+        if not os.path.isdir(self.report.info['analysis_path']):
             raise CuckooFeedbackError(
-                "Can't include the entire analysis for this analysis as the "
-                "analysis path doesn't exist."
+                'Can\'t include the entire analysis for this analysis as the '
+                'analysis path doesn\'t exist.'
             )
 
         # TODO Support for also including memory dumps (should we?) and/or
         # behavioral logs or at least something like matched signatures.
-        self.gather_export_files(self.report.info["analysis_path"])
+        self.gather_export_files(self.report.info['analysis_path'])
 
     def add_error(self, error):
         self.errors.append(error)
@@ -259,48 +260,48 @@ class CuckooFeedbackObject(object):
         self.traceback = tb or traceback.format_exc()
 
     def validate(self):
-        if not self.contact.get("name"):
-            raise CuckooFeedbackError("Missing contact name")
+        if not self.contact.get('name'):
+            raise CuckooFeedbackError('Missing contact name')
 
-        if not self.contact.get("email"):
-            raise CuckooFeedbackError("Missing contact email")
+        if not self.contact.get('email'):
+            raise CuckooFeedbackError('Missing contact email')
 
         from django.core.validators import validate_email, ValidationError
         try:
-            validate_email(self.contact["email"])
+            validate_email(self.contact['email'])
         except ValidationError:
             raise CuckooFeedbackError(
-                "Invalid email address: %s!" % self.contact["email"]
+                'Invalid email address: %s!' % self.contact['email']
             )
 
         if not self.message:
-            raise CuckooFeedbackError("Missing feedback message")
+            raise CuckooFeedbackError('Missing feedback message')
 
         return True
 
     def to_dict(self):
         return {
-            "version": version,
-            "errors": self.errors,
-            "traceback": self.traceback,
-            "contact": self.contact,
-            "automated": self.automated,
-            "message": self.message,
-            "info": self.info,
-            "cuckoo": {
-                "cwd": cwd(),
-                "app": os.environ.get("CUCKOO_APP"),
-                "config": Config.from_confdir(cwd("conf"), sanitize=True),
+            'version': version,
+            'errors': self.errors,
+            'traceback': self.traceback,
+            'contact': self.contact,
+            'automated': self.automated,
+            'message': self.message,
+            'info': self.info,
+            'cuckoo': {
+                'cwd': cwd(),
+                'app': os.environ.get('CUCKOO_APP'),
+                'config': Config.from_confdir(cwd('conf'), sanitize=True),
             },
         }
 
     def to_files(self):
         buf = io.BytesIO()
-        z = zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED)
+        z = zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED)
         for filename, filepath in self.export:
             z.write(filepath, filename)
         z.close()
         buf.seek(0)
         return {
-            "file": buf,
+            'file': buf,
         }
