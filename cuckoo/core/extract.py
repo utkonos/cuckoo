@@ -1,7 +1,6 @@
 # Copyright (C) 2017-2018 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import egghatch
 import logging
 import os
@@ -15,7 +14,8 @@ from cuckoo.misc import cwd, version
 
 log = logging.getLogger(__name__)
 
-class ExtractManager(object):
+
+class ExtractManager:
     _instances = {}
     extractors = []
 
@@ -38,10 +38,10 @@ class ExtractManager(object):
         for ext in Extractor.__subclasses__():
             if not supported_version(version, ext.minimum, ext.maximum):
                 log.debug(
-                    "You are running a version of Cuckoo that's not "
-                    "compatible with this Extractor (either it's too old or "
-                    "too new): cuckoo=%s extractor=%s minversion=%s "
-                    "maxversion=%s",
+                    'You are running a version of Cuckoo that\'s not '
+                    'compatible with this Extractor (either it\'s too old or '
+                    'too new): cuckoo=%s extractor=%s minversion=%s '
+                    'maxversion=%s',
                     version, ext.__name__, ext.minimum, ext.maximum
                 )
                 continue
@@ -49,14 +49,14 @@ class ExtractManager(object):
             cls.extractors.append(ext)
 
             # Turn str/unicode into a tuple of size one.
-            if isinstance(ext.yara_rules, basestring):
+            if isinstance(ext.yara_rules, str):
                 ext.yara_rules = ext.yara_rules,
 
     def __del__(self):
         self._instances.pop(self.task_id, None)
 
     def write_extracted(self, ext, payload):
-        dirpath = cwd("extracted", analysis=self.task_id)
+        dirpath = cwd('extracted', analysis=self.task_id)
 
         # TODO We need to move this somewhere else. Just a temporary
         # hack in case old reports are processed that don't have the
@@ -72,8 +72,8 @@ class ExtractManager(object):
 
         # TODO Implement some rate-limiting here.
 
-        filepath = os.path.join(dirpath, "%d.%s" % (len(self.items), ext))
-        open(filepath, "wb").write(payload)
+        filepath = os.path.join(dirpath, '%d.%s' % (len(self.items), ext))
+        open(filepath, 'wb').write(payload)
         return filepath
 
     def push_command_line(self, cmdline, process=None):
@@ -83,25 +83,25 @@ class ExtractManager(object):
 
     def push_script(self, process, command):
         filepath = self.write_extracted(
-            command.ext, command.get_script().encode("utf8")
+            command.ext, command.get_script().encode('utf8')
         )
         if not filepath:
             return
 
         process = process or {}
 
-        yara_matches = File(filepath).get_yara("scripts")
+        yara_matches = File(filepath).get_yara('scripts')
         self.items.append({
-            "category": "script",
-            "program": command.program,
-            "pid": process.get("pid"),
-            "first_seen": process.get("first_seen"),
-            "raw": filepath,
-            "yara": yara_matches,
-            "info": {},
+            'category': 'script',
+            'program': command.program,
+            'pid': process.get('pid'),
+            'first_seen': process.get('first_seen'),
+            'raw': filepath,
+            'yara': yara_matches,
+            'info': {},
         })
         for match in yara_matches:
-            match = YaraMatch(match, "script")
+            match = YaraMatch(match, 'script')
             self.handle_yara(filepath, match)
 
     def push_script_recursive(self, command):
@@ -110,83 +110,83 @@ class ExtractManager(object):
             self.push_script_recursive(child)
 
     def push_shellcode(self, sc):
-        filepath = self.write_extracted("bin", sc)
+        filepath = self.write_extracted('bin', sc)
         if not filepath:
             return
 
         # This file contains a plaintext representation of the shellcode.
-        open("%s.txt" % filepath, "wb").write(egghatch.as_text(sc))
+        open('%s.txt' % filepath, 'wb').write(egghatch.as_text(sc))
 
-        yara_matches = File(filepath).get_yara("shellcode")
+        yara_matches = File(filepath).get_yara('shellcode')
         self.items.append({
-            "category": "shellcode",
-            "raw": filepath,
-            "yara": yara_matches,
-            "info": {
-                "pretty": "%s.txt" % filepath,
+            'category': 'shellcode',
+            'raw': filepath,
+            'yara': yara_matches,
+            'info': {
+                'pretty': '%s.txt' % filepath,
             },
         })
         for match in yara_matches:
-            match = YaraMatch(match, "shellcode")
+            match = YaraMatch(match, 'shellcode')
             self.handle_yara(filepath, match)
 
     def push_blob(self, blob, category, externals, info=None):
-        filepath = self.write_extracted("blob", blob)
+        filepath = self.write_extracted('blob', blob)
         if not filepath:
             return
 
         yara_matches = File(filepath).get_yara(category, externals)
 
         self.items.append({
-            "category": category,
-            "raw": filepath,
-            "yara": yara_matches,
-            "info": info or {},
+            'category': category,
+            'raw': filepath,
+            'yara': yara_matches,
+            'info': info or {},
         })
         for match in yara_matches:
             match = YaraMatch(match, category)
             self.handle_yara(filepath, match)
 
     def push_blob_noyara(self, blob, category, info=None):
-        filepath = self.write_extracted("blob", blob)
+        filepath = self.write_extracted('blob', blob)
         if not filepath:
             return
 
         self.items.append({
-            "category": category,
-            "raw": filepath,
-            "yara": [],
-            "info": info or {},
+            'category': category,
+            'raw': filepath,
+            'yara': [],
+            'info': info or {},
         })
 
     def push_config(self, config):
-        if not isinstance(config, dict) or "family" not in config:
-            raise CuckooCriticalError("Invalid call to push_config().")
+        if not isinstance(config, dict) or 'family' not in config:
+            raise CuckooCriticalError('Invalid call to push_config().')
 
         self.items.append({
-            "category": "config",
-            "raw": None,
-            "yara": [],
-            "info": config,
+            'category': 'config',
+            'raw': None,
+            'yara': [],
+            'info': config,
         })
 
     def enhance(self, filepath, key, value):
         for item in self.items:
-            if item["raw"] == filepath:
-                item["info"][key] = value
+            if item['raw'] == filepath:
+                item['info'][key] = value
                 break
 
     def peek_office(self, files):
         for filename, content in files.items():
             externals = {
-                "filename": filename,
+                'filename': filename,
             }
-            if Buffer(content).get_yara_quick("office", externals):
-                self.push_blob(content, "office", externals)
+            if Buffer(content).get_yara_quick('office', externals):
+                self.push_blob(content, 'office', externals)
 
     def peek_procmem(self, process):
-        for match in process["yara"]:
-            self.handle_yara(process["file"], YaraMatch(match))
+        for match in process['yara']:
+            self.handle_yara(process['file'], YaraMatch(match))
 
     def handle_yara(self, filepath, match):
         for plugin in self.extractors:
@@ -195,7 +195,7 @@ class ExtractManager(object):
                     plugin(self).handle_yara(filepath, match)
                 except Exception as e:
                     log.exception(
-                        "Exception in an Extractor's handle_yara: %s", e
+                        'Exception in an Extractor\'s handle_yara: %s', e
                     )
 
     def results(self):
