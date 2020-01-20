@@ -1,7 +1,6 @@
 # Copyright (C) 2016-2018 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import ctypes
 import errno
 import importlib
@@ -33,64 +32,70 @@ _raw = None
 
 # Normalized Cuckoo version (i.e., "2.0.5.3" in setup is "2.0.5" here). This
 # because we use StrictVersion() later on which doesn't accept "2.0.5.3".
-version = "2.0.7"
+version = '3.0.0'
+
 
 def set_cwd(path, raw=None):
     global _root, _raw
     _root = path
     _raw = raw
 
+
 def cwd(*args, **kwargs):
-    """Return absolute path to this file in the Cuckoo Working Directory or
-    optionally - when private=True has been passed along - to our private
-    Cuckoo Working Directory which is not configurable."""
-    if kwargs.get("private"):
-        return os.path.join(cuckoo.__path__[0], "private", *args)
-    elif kwargs.get("raw"):
+    """Return absolute path to this file in the Cuckoo Working Directory.
+
+    Or optionally - when private=True has been passed along - to our private
+    Cuckoo Working Directory which is not configurable.
+    """
+    if kwargs.get('private'):
+        return os.path.join(cuckoo.__path__[0], 'private', *args)
+    elif kwargs.get('raw'):
         return _raw
-    elif kwargs.get("root"):
+    elif kwargs.get('root'):
         return _root
-    elif kwargs.get("analysis"):
+    elif kwargs.get('analysis'):
         return os.path.join(
-            _root, "storage", "analyses", "%s" % kwargs["analysis"], *args
+            _root, 'storage', 'analyses', '%s' % kwargs['analysis'], *args
         )
     elif kwargs:
         raise RuntimeError(
-            "Invalid arguments provided to cwd(): %r %r" % (args, kwargs)
+            'Invalid arguments provided to cwd(): %r %r' % (args, kwargs)
         )
     else:
         return os.path.join(_root, *args)
 
+
 def decide_cwd(cwd=None, exists=False):
     """Decide and set the CWD, optionally check if it's a valid CWD."""
     if not cwd:
-        cwd = os.environ.get("CUCKOO_CWD")
+        cwd = os.environ.get('CUCKOO_CWD')
 
     if not cwd:
-        cwd = os.environ.get("CUCKOO")
+        cwd = os.environ.get('CUCKOO')
 
-    if not cwd and os.path.exists(".cwd"):
-        cwd = "."
+    if not cwd and os.path.exists('.cwd'):
+        cwd = '.'
 
     if not cwd:
-        cwd = "~/.cuckoo"
+        cwd = '~/.cuckoo'
 
     dirpath = os.path.abspath(os.path.expanduser(cwd))
     if exists:
         if not os.path.exists(dirpath):
             raise CuckooStartupError(
-                "Unable to start this Cuckoo command as the provided CWD (%r) "
-                "is not present!" % dirpath
+                'Unable to start this Cuckoo command as the provided CWD (%r) '
+                'is not present!' % dirpath
             )
 
-        if not os.path.exists(os.path.join(dirpath, ".cwd")):
+        if not os.path.exists(os.path.join(dirpath, '.cwd')):
             raise CuckooStartupError(
-                "Unable to start this Cuckoo command as the provided CWD (%r) "
-                "is not a proper CWD!" % dirpath
+                'Unable to start this Cuckoo command as the provided CWD (%r) '
+                'is not a proper CWD!' % dirpath
             )
 
     set_cwd(dirpath, raw=cwd)
     return dirpath
+
 
 def mkdir(*args):
     """Create a directory without throwing exceptions if it already exists."""
@@ -98,10 +103,12 @@ def mkdir(*args):
     if not os.path.isdir(dirpath):
         os.mkdir(dirpath)
 
+
 def getuser():
     if HAVE_PWD:
         return pwd.getpwuid(os.getuid())[0]
-    return ""
+    return ''
+
 
 def load_signatures():
     """Load additional Signatures from the Cuckoo Working Directory.
@@ -115,18 +122,18 @@ def load_signatures():
     that can now be accessed as "cuckoo.common.abstracts".
     """
     # Forward everything from lib.cuckoo to "our" cuckoo module.
-    sys.modules["lib"] = types.ModuleType("lib")
-    sys.modules["lib.cuckoo"] = sys.modules["cuckoo"]
-    sys.modules["lib.cuckoo.common"] = sys.modules["cuckoo.common"]
+    sys.modules['lib'] = types.ModuleType('lib')
+    sys.modules['lib.cuckoo'] = sys.modules['cuckoo']
+    sys.modules['lib.cuckoo.common'] = sys.modules['cuckoo.common']
 
     # Import this here in order to avoid recursive import statements.
     from cuckoo.common.abstracts import Signature
 
     # Define Signature in such a way that it is equal to "our" Signature.
-    sys.modules["lib.cuckoo.common.abstracts"] = types.ModuleType(
-        "lib.cuckoo.common.abstracts"
+    sys.modules['lib.cuckoo.common.abstracts'] = types.ModuleType(
+        'lib.cuckoo.common.abstracts'
     )
-    sys.modules["lib.cuckoo.common.abstracts"].Signature = Signature
+    sys.modules['lib.cuckoo.common.abstracts'].Signature = Signature
 
     # Don't clobber the Cuckoo Working Directory with .pyc files.
     dont_write_bytecode = sys.dont_write_bytecode
@@ -137,7 +144,7 @@ def load_signatures():
     # enumerate_plugins(), which the Cuckoo Community adheres to. For this to
     # work we temporarily insert the CWD in Python's path.
     sys.path.insert(0, cwd())
-    mod = importlib.import_module("signatures")
+    mod = importlib.import_module('signatures')
     sys.path.pop(0)
 
     # Restore bytecode option.
@@ -145,23 +152,27 @@ def load_signatures():
 
     # Index all of the available Signatures that have been located.
     for key, value in sorted(mod.__dict__.items()):
-        if not key.startswith("_") and hasattr(value, "plugins"):
+        if not key.startswith('_') and hasattr(value, 'plugins'):
             cuckoo.signatures.extend(value.plugins)
+
 
 def _worker(conn, func, *args, **kwargs):
     conn.send(func(*args, **kwargs))
     conn.close()
 
+
 def dispatch(func, args=(), kwargs={}, timeout=60, process=True):
-    """Dispatch a function call to a separate process or thread to execute with
-    a maximum provided timeout. Note that in almost all occurrences a separate
+    """Dispatch a function call to a separate process or thread to execute with a maximum provided timeout.
+
+    Note that in almost all occurrences a separate
     process should be used as otherwise we might end up with out-of-order
-    locking mechanism instances, resulting in undefined behavior later on."""
+    locking mechanism instances, resulting in undefined behavior later on.
+    """
     if not isinstance(args, tuple) or not isinstance(kwargs, dict):
-        raise RuntimeError("args must be a tuple and kwargs a dict")
+        raise RuntimeError('args must be a tuple and kwargs a dict')
 
     if not process:
-        raise RuntimeError("no support yet for dispatch(process=False)")
+        raise RuntimeError('no support yet for dispatch(process=False)')
 
     parent, child = multiprocessing.Pipe(duplex=False)
     p = multiprocessing.Process(
@@ -178,32 +189,38 @@ def dispatch(func, args=(), kwargs={}, timeout=60, process=True):
     parent.close()
     return ret
 
+
 def is_windows():
-    return sys.platform == "win32"
+    return sys.platform == 'win32'
+
 
 def is_linux():
-    return sys.platform == "linux2"
+    return sys.platform == 'linux2'
+
 
 def is_macosx():
-    return sys.platform == "darwin"
+    return sys.platform == 'darwin'
+
 
 def Popen(*args, **kwargs):
     """Drop the close_fds argument on Windows platforms in certain situations
     where it'd otherwise cause an exception from the subprocess module."""
-    if is_windows() and "close_fds" in kwargs:
-        if "stdin" in kwargs or "stdout" in kwargs or "stderr" in kwargs:
-            kwargs.pop("close_fds")
+    if is_windows() and 'close_fds' in kwargs:
+        if 'stdin' in kwargs or 'stdout' in kwargs or 'stderr' in kwargs:
+            kwargs.pop('close_fds')
 
     return subprocess.Popen(*args, **kwargs)
 
+
 def drop_privileges(username):
     """Drop privileges to selected user.
+
     @param username: drop privileges to this username
     """
     if not HAVE_PWD:
         sys.exit(
-            "Unable to import pwd required for dropping privileges (note that "
-            "privilege dropping is not supported under Windows)!"
+            'Unable to import pwd required for dropping privileges (note that '
+            'privilege dropping is not supported under Windows)!'
         )
 
     try:
@@ -211,22 +228,23 @@ def drop_privileges(username):
         os.setgroups((user.pw_gid,))
         os.setgid(user.pw_gid)
         os.setuid(user.pw_uid)
-        os.putenv("HOME", user.pw_dir)
+        os.putenv('HOME', user.pw_dir)
     except KeyError:
-        sys.exit("Invalid user specified to drop privileges to: %s" % username)
+        sys.exit('Invalid user specified to drop privileges to: %s' % username)
     except OSError as e:
-        sys.exit("Failed to drop privileges to %s: %s" % (username, e))
+        sys.exit('Failed to drop privileges to %s: %s' % (username, e))
+
 
 class Pidfile(object):
     def __init__(self, name):
         """Manage pidfile of given name."""
         self.name = name
-        self.filepath = cwd("pidfiles", "%s.pid" % name)
+        self.filepath = cwd('pidfiles', '%s.pid' % name)
         self.pid = None
 
     def create(self):
         """Create pidfile for the current process."""
-        with open(self.filepath, "wb") as f:
+        with open(self.filepath, 'wb') as f:
             f.write(str(os.getpid()))
 
     def remove(self):
@@ -243,7 +261,7 @@ class Pidfile(object):
     def read(self):
         """Read PID from pidfile."""
         try:
-            self.pid = int(open(self.filepath, "rb").read())
+            self.pid = int(open(self.filepath, 'rb').read())
         except ValueError:
             self.pid = None
         return self.pid
@@ -276,10 +294,12 @@ class Pidfile(object):
     @staticmethod
     def get_active_pids():
         """Return a dict containing active pids.
-        Key is the pidfile name and value is pid"""
+
+        Key is the pidfile name and value is pid.
+        """
         pids = {}
 
-        for filename in os.listdir(cwd("pidfiles")):
+        for filename in os.listdir(cwd('pidfiles')):
             name, _ = os.path.splitext(filename)
             pidfile = Pidfile(name)
             if pidfile.exists():
@@ -287,17 +307,19 @@ class Pidfile(object):
 
         return pids
 
+
 def make_list(obj):
     if isinstance(obj, (tuple, list)):
         return list(obj)
     return [obj]
 
+
 def format_command(*args):
     raw = cwd(raw=True)
-    if raw == "." or raw == "~/.cuckoo":
-        command = "cuckoo "
-    elif " " in raw or "'" in raw:
+    if raw == '.' or raw == '~/.cuckoo':
+        command = 'cuckoo '
+    elif ' ' in raw or "'" in raw:
         command = 'cuckoo --cwd "%s" ' % raw
     else:
-        command = "cuckoo --cwd %s " % raw
-    return command + " ".join(args)
+        command = 'cuckoo --cwd %s ' % raw
+    return command + ' '.join(args)
