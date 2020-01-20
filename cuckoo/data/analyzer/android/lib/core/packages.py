@@ -3,8 +3,10 @@
 # See the file 'docs/LICENSE' for copying permission.
 # Originally contributed by Check Point Software Technologies, Ltd.
 
+
 def choose_package(file_type, file_name):
     """Choose analysis package due to file type and file extension.
+
     @param file_type: file type.
     @return: package or None.
     """
@@ -14,11 +16,11 @@ def choose_package(file_type, file_name):
     file_type = file_type.lower()
     file_name = file_name.lower()
 
-    if "apk" in file_name:
-        return "apk"
-    elif "zip" in file_type:
-        return "apk"
-    # elif "DEX" in file_type:
-    #    return "dex"
+    if 'apk' in file_name:
+        return 'apk'
+    elif 'zip' in file_type:
+        return 'apk'
+    # elif 'DEX' in file_type:
+    #    return 'dex'
     else:
-        return "apk"
+        return 'apk'

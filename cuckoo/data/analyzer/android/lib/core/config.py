@@ -2,10 +2,11 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 # Originally contributed by Check Point Software Technologies, Ltd.
-
 import ConfigParser
 
+
 class Config:
+
     def __init__(self, cfg):
         """@param cfg: configuration file."""
         config = ConfigParser.ConfigParser(allow_no_value=True)
