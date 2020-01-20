@@ -2,15 +2,16 @@
 # Copyright (C) 2014-2018 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import sys
 import random
 
 from cuckoo.common.colors import color, yellow
 from cuckoo.misc import version
 
+
 def logo():
     """Cuckoo asciiarts.
+
     @return: asciiarts array.
     """
     logos = []
@@ -140,9 +141,7 @@ def logo():
                                \"\"\"\"\"\"\"\"\"""")
 
     print(color(random.choice(logos), random.randrange(31, 37)))
-    print
-    print(" Cuckoo Sandbox %s" % yellow(version))
-    print(" www.cuckoosandbox.org")
-    print(" Copyright (c) 2010-2018")
-    print
+    print(' Cuckoo Sandbox %s' % yellow(version))
+    print(' www.cuckoosandbox.org')
+    print(' Copyright (c) 2010-2020')
     sys.stdout.flush()
