@@ -2,7 +2,6 @@
 # Copyright (C) 2014-2019 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 from __future__ import print_function
 
 import errno
@@ -34,28 +33,30 @@ BUFSIZE = 16 * 1024
 
 # Directories in which analysis-related files will be stored; also acts as
 # whitelist
-RESULT_UPLOADABLE = ("files", "shots", "buffer",  "extracted", "memory")
-RESULT_DIRECTORIES = RESULT_UPLOADABLE + ("reports", "logs")
+RESULT_UPLOADABLE = ('files', 'shots', 'buffer', 'extracted', 'memory')
+RESULT_DIRECTORIES = RESULT_UPLOADABLE + ('reports', 'logs')
 
 # Prevent malicious clients from using potentially dangerous filenames
 # E.g. C API confusion by using null, or using the colon on NTFS (Alternate
 # Data Streams); XXX: just replace illegal chars?
 BANNED_PATH_CHARS = b'\x00:'
 
+
 def netlog_sanitize_fname(path):
     """Validate agent-provided path for result files"""
-    path = path.replace("\\", "/")
+    path = path.replace('\\', '/')
     dir_part, name = os.path.split(path)
     if dir_part not in RESULT_UPLOADABLE:
-        raise CuckooOperationalError("Netlog client requested banned path: %r"
+        raise CuckooOperationalError('Netlog client requested banned path: %r'
                                      % path)
     if any(c in BANNED_PATH_CHARS for c in name):
         for c in BANNED_PATH_CHARS:
-            path = path.replace(c, "X")
+            path = path.replace(c, 'X')
 
     return path
 
-class HandlerContext(object):
+
+class HandlerContext:
     """Holds context for protocol handlers.
 
     Can safely be cancelled from another thread, though in practice this will
@@ -68,10 +69,10 @@ class HandlerContext(object):
         # The path where artifacts will be stored
         self.storagepath = storagepath
         self.sock = sock
-        self.buf = ""
+        self.buf = ''
 
     def __repr__(self):
-        return "<Context for %s>" % self.command
+        return '<Context for %s>' % self.command
 
     def cancel(self):
         """Cancel this context; gevent might complain about this with an
@@ -86,13 +87,13 @@ class HandlerContext(object):
             return self.sock.recv(16384)
         except socket.error as e:
             if e.errno == errno.EBADF:
-                return ""
+                return ''
 
             if e.errno != errno.ECONNRESET:
                 raise
-            log.debug("Task #%s had connection reset for %r", self.task_id,
+            log.debug('Task #%s had connection reset for %r', self.task_id,
                       self)
-            return ""
+            return ''
 
     def drain_buffer(self):
         """Drain buffer and end buffering"""
@@ -103,12 +104,12 @@ class HandlerContext(object):
         """Read until the next newline character, but never more than
         `MAX_NETLOG_LINE`."""
         while True:
-            pos = self.buf.find("\n")
+            pos = self.buf.find('\n')
             if pos < 0:
                 if len(self.buf) >= MAX_NETLOG_LINE:
-                    raise CuckooOperationalError("Received overly long line")
+                    raise CuckooOperationalError('Received overly long line')
                 buf = self.read()
-                if buf == "":
+                if buf == '':
                     raise EOFError
                 self.buf += buf
                 continue
@@ -121,12 +122,13 @@ class HandlerContext(object):
         fd.write(self.drain_buffer())
         while True:
             buf = self.read()
-            if buf == "":
+            if buf == '':
                 break
             fd.write(buf)
         fd.flush()
 
-class WriteLimiter(object):
+
+class WriteLimiter:
     def __init__(self, fd, remain):
         self.fd = fd
         self.remain = remain
@@ -140,20 +142,21 @@ class WriteLimiter(object):
             self.remain -= write
         if size and size != write:
             if not self.warned:
-                log.warning("Uploaded file length larger than upload_max_size, "
-                            "stopping upload.")
-                self.fd.write("... (truncated)")
+                log.warning('Uploaded file length larger than upload_max_size, '
+                            'stopping upload.')
+                self.fd.write('... (truncated)')
                 self.warned = True
 
     def flush(self):
         self.fd.flush()
 
+
 class FileUpload(ProtocolHandler):
     def init(self):
-        self.upload_max_size = config("cuckoo:resultserver:upload_max_size")
+        self.upload_max_size = config('cuckoo:resultserver:upload_max_size')
         self.storagepath = self.handler.storagepath
         self.fd = None
-        self.filelog = os.path.join(self.handler.storagepath, "files.json")
+        self.filelog = os.path.join(self.handler.storagepath, 'files.json')
 
     def handle(self):
         # Read until newline for file path, e.g.,
@@ -168,51 +171,53 @@ class FileUpload(ProtocolHandler):
         else:
             filepath, pids = None, []
 
-        log.debug("Task #%s: File upload for %r", self.task_id, dump_path)
-        file_path = os.path.join(self.storagepath, dump_path.decode("utf-8"))
+        log.debug('Task #%s: File upload for %r', self.task_id, dump_path)
+        file_path = os.path.join(self.storagepath, dump_path.decode('utf-8'))
 
         try:
             self.fd = open_exclusive(file_path)
         except OSError as e:
             if e.errno == errno.EEXIST:
-                raise CuckooOperationalError("Analyzer for task #%s tried to "
-                                             "overwrite an existing file" %
+                raise CuckooOperationalError('Analyzer for task #%s tried to '
+                                             'overwrite an existing file' %
                                              self.task_id)
             raise
 
         # Append-writes are atomic
-        with open(self.filelog, "a+b") as f:
+        with open(self.filelog, 'a+b') as f:
             print(json.dumps({
-                "path": dump_path,
-                "filepath": filepath,
-                "pids": pids,
+                'path': dump_path,
+                'filepath': filepath,
+                'pids': pids,
             }), file=f)
 
         self.handler.sock.settimeout(None)
         try:
             return self.handler.copy_to_fd(self.fd, self.upload_max_size)
         finally:
-            log.debug("Task #%s uploaded file length: %s", self.task_id,
+            log.debug('Task #%s uploaded file length: %s', self.task_id,
                       self.fd.tell())
+
 
 class LogHandler(ProtocolHandler):
     """The live analysis log. Can only be opened once in a single session."""
 
     def init(self):
-        self.logpath = os.path.join(self.handler.storagepath, "analysis.log")
+        self.logpath = os.path.join(self.handler.storagepath, 'analysis.log')
         try:
             self.fd = open_exclusive(self.logpath, bufsize=1)
         except OSError:
-            log.error("Task #%s: attempted to reopen live log analysis.log.",
+            log.error('Task #%s: attempted to reopen live log analysis.log.',
                       self.task_id)
             return
 
-        log.debug("Task #%s: live log analysis.log initialized.",
+        log.debug('Task #%s: live log analysis.log initialized.',
                   self.task_id)
 
     def handle(self):
         if self.fd:
             return self.handler.copy_to_fd(self.fd)
+
 
 class BsonStore(ProtocolHandler):
     def init(self):
@@ -221,20 +226,21 @@ class BsonStore(ProtocolHandler):
         # in the sense that newer Cuckoo Monitor binaries work with older
         # versions of Cuckoo, the other way around doesn't apply here.
         if self.version is None:
-            log.warning("Agent is sending BSON files without PID parameter, "
-                        "you should probably update it")
+            log.warning('Agent is sending BSON files without PID parameter, '
+                        'you should probably update it')
             self.fd = None
             return
 
         self.fd = open(os.path.join(self.handler.storagepath,
-                                    "logs", "%d.bson" % self.version), "wb")
+                                    'logs', '%d.bson' % self.version), 'wb')
 
     def handle(self):
         """Read a BSON stream, attempting at least basic validation, and
         log failures."""
-        log.debug("Task #%s is sending a BSON stream", self.task_id)
+        log.debug('Task #%s is sending a BSON stream', self.task_id)
         if self.fd:
             return self.handler.copy_to_fd(self.fd)
+
 
 class GeventResultServerWorker(gevent.server.StreamServer):
     """The new ResultServer, providing a huge performance boost as well as
@@ -251,9 +257,9 @@ class GeventResultServerWorker(gevent.server.StreamServer):
     is one of various steps to start being able to use less fd's in Cuckoo.
     """
     commands = {
-        "BSON": BsonStore,
-        "FILE": FileUpload,
-        "LOG": LogHandler,
+        'BSON': BsonStore,
+        'FILE': FileUpload,
+        'LOG': LogHandler,
     }
     task_mgmt_lock = threading.Lock()
 
@@ -272,7 +278,7 @@ class GeventResultServerWorker(gevent.server.StreamServer):
     def add_task(self, task_id, ipaddr):
         with self.task_mgmt_lock:
             self.tasks[ipaddr] = task_id
-            log.debug("Now tracking machine %s for task #%s", ipaddr, task_id)
+            log.debug('Now tracking machine %s for task #%s', ipaddr, task_id)
 
     def del_task(self, task_id, ipaddr):
         """Delete ResultServer state and abort pending RequestHandlers. Since
@@ -282,17 +288,17 @@ class GeventResultServerWorker(gevent.server.StreamServer):
         with self.task_mgmt_lock:
             if self.tasks.pop(ipaddr, None) is None:
                 log.warning(
-                    "ResultServer did not have a task with ID %s and IP %s",
+                    'ResultServer did not have a task with ID %s and IP %s',
                     task_id, ipaddr
                 )
             else:
                 log.debug(
-                    "Stopped tracking machine %s for task #%s",
+                    'Stopped tracking machine %s for task #%s',
                     ipaddr, task_id
                 )
             ctxs = self.handlers.pop(task_id, set())
             for ctx in ctxs:
-                log.debug("Cancel %s for task %r", ctx, task_id)
+                log.debug('Cancel %s for task %r', ctx, task_id)
                 ctx.cancel()
 
     def handle(self, sock, addr):
@@ -303,7 +309,7 @@ class GeventResultServerWorker(gevent.server.StreamServer):
         with self.task_mgmt_lock:
             task_id = self.tasks.get(ipaddr)
             if not task_id:
-                log.warning("ResultServer did not have a task for IP %s",
+                log.warning('ResultServer did not have a task for IP %s',
                             ipaddr)
                 return
 
@@ -324,8 +330,8 @@ class GeventResultServerWorker(gevent.server.StreamServer):
                 # protocol and a different task for that IP address may have
                 # been registered
                 if self.tasks.get(ipaddr) != task_id:
-                    log.warning("Task #%s for IP %s was cancelled during "
-                                "negotiation", task_id, ipaddr)
+                    log.warning('Task #%s for IP %s was cancelled during '
+                                'negotiation', task_id, ipaddr)
                     return
                 s = self.handlers.setdefault(task_id, set())
                 s.add(ctx)
@@ -341,8 +347,8 @@ class GeventResultServerWorker(gevent.server.StreamServer):
                 ctx.cancel()
                 if ctx.buf:
                     # This is usually not a good sign
-                    log.warning("Task #%s with protocol %s has unprocessed "
-                                "data before getting disconnected",
+                    log.warning('Task #%s with protocol %s has unprocessed '
+                                'data before getting disconnected',
                                 task_id, protocol)
 
         finally:
@@ -350,26 +356,27 @@ class GeventResultServerWorker(gevent.server.StreamServer):
 
     def negotiate_protocol(self, task_id, ctx):
         header = ctx.read_newline()
-        if " " in header:
+        if ' ' in header:
             command, version = header.split()
             version = int(version)
         else:
             command, version = header, None
         klass = self.commands.get(command)
         if not klass:
-            log.warning("Task #%s: unknown netlog protocol requested (%r), "
-                        "terminating connection.", task_id, command)
+            log.warning('Task #%s: unknown netlog protocol requested (%r), '
+                        'terminating connection.', task_id, command)
             return
         ctx.command = command
         return klass(task_id, ctx, version)
 
-class ResultServer(object):
+
+class ResultServer:
     """Manager for the ResultServer worker and task state."""
     __metaclass__ = Singleton
 
     def __init__(self):
-        ip = config("cuckoo:resultserver:ip")
-        port = config("cuckoo:resultserver:port")
+        ip = config('cuckoo:resultserver:ip')
+        port = config('cuckoo:resultserver:port')
         pool_size = config('cuckoo:resultserver:pool_size')
 
         sock = gevent.socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -380,21 +387,21 @@ class ResultServer(object):
         except (OSError, socket.error) as e:
             if e.errno == errno.EADDRINUSE:
                 raise CuckooCriticalError(
-                    "Cannot bind ResultServer on port %d "
-                    "because it was in use, bailing." % port
+                    'Cannot bind ResultServer on port %d '
+                    'because it was in use, bailing.' % port
                 )
             elif e.errno == errno.EADDRNOTAVAIL:
                 raise CuckooCriticalError(
-                    "Unable to bind ResultServer on %s:%s %s. This "
-                    "usually happens when you start Cuckoo without "
-                    "bringing up the virtual interface associated with "
-                    "the ResultServer IP address. Please refer to "
-                    "https://cuckoo.sh/docs/faq/#troubles-problem "
-                    "for more information." % (ip, port, e)
+                    'Unable to bind ResultServer on %s:%s %s. This '
+                    'usually happens when you start Cuckoo without '
+                    'bringing up the virtual interface associated with '
+                    'the ResultServer IP address. Please refer to '
+                    'https://cuckoo.sh/docs/faq/#troubles-problem '
+                    'for more information.' % (ip, port, e)
                 )
             else:
                 raise CuckooCriticalError(
-                    "Unable to bind ResultServer on %s:%s: %s" %
+                    'Unable to bind ResultServer on %s:%s: %s' %
                     (ip, port, e)
                 )
 
