@@ -39,13 +39,13 @@ def enumerate_plugins(dirpath, module_prefix, namespace, class_,
     if os.path.isfile(dirpath):
         dirpath = os.path.dirname(dirpath)
 
-    for _, module_name, _ in pkgutil.iter_modules([dirpath], module_prefix + "."):
+    for _, module_name, _ in pkgutil.iter_modules([dirpath], module_prefix + '.'):
         try:
             importlib.import_module(module_name)
         except ImportError as e:
             raise CuckooOperationalError(
-                "Unable to load the Cuckoo plugin at %s: %s. Please "
-                "review its contents and/or validity!" % (module_name, e)
+                'Unable to load the Cuckoo plugin at %s: %s. Please '
+                'review its contents and/or validity!' % (module_name, e)
             )
 
     subclasses = class_.__subclasses__()[:]
@@ -96,20 +96,20 @@ class RunAuxiliary:
                 current = module()
             except:
                 log.exception(
-                    "Failed to load the auxiliary module: %s",
-                    module, extra={"task_id": self.task["id"]}
+                    'Failed to load the auxiliary module: %s',
+                    module, extra={'task_id': self.task['id']}
                 )
                 return
 
             module_name = inspect.getmodule(current).__name__
-            if "." in module_name:
-                module_name = module_name.rsplit(".", 1)[1]
+            if '.' in module_name:
+                module_name = module_name.rsplit('.', 1)[1]
 
             try:
-                options = config2("auxiliary", module_name)
+                options = config2('auxiliary', module_name)
             except CuckooConfigurationError:
                 log.debug(
-                    "Auxiliary module %s not found in configuration file",
+                    'Auxiliary module %s not found in configuration file',
                     module_name
                 )
                 continue
@@ -130,11 +130,11 @@ class RunAuxiliary:
                 continue
             except:
                 log.exception(
-                    "Unable to start auxiliary module %s",
-                    module_name, extra={"task_id": self.task["id"]}
+                    'Unable to start auxiliary module %s',
+                    module_name, extra={'task_id': self.task['id']}
                 )
             else:
-                log.debug("Started auxiliary module: %s",
+                log.debug('Started auxiliary module: %s',
                           current.__class__.__name__)
                 self.enabled.append(current)
 
@@ -145,16 +145,16 @@ class RunAuxiliary:
         enabled = []
         for module in self.enabled:
             try:
-                getattr(module, "cb_%s" % name, default)(*args, **kwargs)
+                getattr(module, 'cb_%s' % name, default)(*args, **kwargs)
             except NotImplementedError:
                 pass
             except CuckooDisableModule:
                 continue
             except:
                 log.exception(
-                    "Error performing callback %r on auxiliary module %r",
+                    'Error performing callback %r on auxiliary module %r',
                     name, module.__class__.__name__,
-                    extra={"task_id": self.task["id"]}
+                    extra={'task_id': self.task['id']}
                 )
 
             enabled.append(module)
@@ -169,12 +169,12 @@ class RunAuxiliary:
                 pass
             except:
                 log.exception(
-                    "Unable to stop auxiliary module: %s",
+                    'Unable to stop auxiliary module: %s',
                     module.__class__.__name__,
-                    extra={"task_id": self.task["id"]}
+                    extra={'task_id': self.task['id']}
                 )
             else:
-                log.debug("Stopped auxiliary module: %s",
+                log.debug('Stopped auxiliary module: %s',
                           module.__class__.__name__)
             stopped.append(module)
 
@@ -194,8 +194,8 @@ class RunProcessing:
         """@param task: task dictionary of the analysis to process."""
         self.task = task
         self.machine = {}
-        self.analysis_path = cwd(analysis=task["id"])
-        self.baseline_path = cwd("storage", "baseline")
+        self.analysis_path = cwd(analysis=task['id'])
+        self.baseline_path = cwd('storage', 'baseline')
 
     def process(self, module, results):
         """Run a processing module.
@@ -209,21 +209,21 @@ class RunProcessing:
             current = module()
         except:
             log.exception(
-                "Failed to load the processing module: %s",
-                module, extra={"task_id": self.task["id"]}
+                'Failed to load the processing module: %s',
+                module, extra={'task_id': self.task['id']}
             )
             return None, None
 
         # Extract the module name.
         module_name = inspect.getmodule(current).__name__
-        if "." in module_name:
-            module_name = module_name.rsplit(".", 1)[1]
+        if '.' in module_name:
+            module_name = module_name.rsplit('.', 1)[1]
 
         try:
-            options = config2("processing", module_name)
+            options = config2('processing', module_name)
         except CuckooConfigurationError:
             log.debug(
-                "Processing module %s not found in configuration file",
+                'Processing module %s not found in configuration file',
                 module_name
             )
             return None, None
@@ -251,42 +251,42 @@ class RunProcessing:
             data = current.run()
 
             log.debug(
-                "Executed processing module \"%s\" for task #%d",
-                current.__class__.__name__, self.task["id"]
+                'Executed processing module "%s" for task #%d',
+                current.__class__.__name__, self.task['id']
             )
 
             # If succeeded, return they module's key name and the data.
             return current.key, data
         except CuckooDependencyError as e:
             log.warning(
-                "The processing module \"%s\" has missing dependencies: %s",
+                'The processing module "%s" has missing dependencies: %s',
                 current.__class__.__name__, e
             )
         except CuckooProcessingError as e:
             log.warning(
-                "The processing module \"%s\" returned the following "
-                "error: %s",
+                'The processing module "%s" returned the following '
+                'error: %s',
                 current.__class__.__name__, e
             )
         except:
             log.exception(
-                "Failed to run the processing module \"%s\" for task #%d:",
-                current.__class__.__name__, self.task["id"],
-                extra={"task_id": self.task["id"]}
+                'Failed to run the processing module "%s" for task #%d:',
+                current.__class__.__name__, self.task['id'],
+                extra={'task_id': self.task['id']}
             )
 
         return None, None
 
     def populate_machine_info(self):
-        if not self.task.get("guest"):
+        if not self.task.get('guest'):
             return
 
         # TODO Actually fill out all of the fields as done for this analysis.
         try:
-            self.machine["name"] = self.task["guest"]["name"]
+            self.machine['name'] = self.task['guest']['name']
             self.machine.update(config2(
-                self.task["guest"]["manager"].lower(),
-                self.task["guest"]["name"]
+                self.task['guest']['manager'].lower(),
+                self.task['guest']['name']
             ))
         except CuckooConfigurationError:
             pass
@@ -303,7 +303,7 @@ class RunProcessing:
         # dump in the analysis' reports folder. (If jsondump is enabled.)
         # We friendly call this "fat dict".
         results = {
-            "_temp": {},
+            '_temp': {},
         }
 
         # Uses plain machine configuration as input.
@@ -326,9 +326,9 @@ class RunProcessing:
                 if key and result:
                     results[key] = result
         else:
-            log.info("No processing modules loaded")
+            log.info('No processing modules loaded')
 
-        results.pop("_temp", None)
+        results.pop('_temp', None)
 
         # Return the fat dict.
         return results
@@ -360,7 +360,7 @@ class RunSignatures:
         for sig in self.signatures:
             # Direct dispatch per API call
             for n in dir(sig):
-                if n.startswith("on_call_"):
+                if n.startswith('on_call_'):
                     self.call_for_api.setdefault(n[8:], set()).add(sig)
             if not self._on_call_defined(sig):
                 # Not implemented...
@@ -397,14 +397,14 @@ class RunSignatures:
         # Sort Signatures by their order.
         cls.available_signatures.sort(key=lambda sig: sig.order)
 
-        cwd_ttps = cwd("stuff", "ttp_descriptions.json")
+        cwd_ttps = cwd('stuff', 'ttp_descriptions.json')
         if os.path.exists(cwd_ttps):
-            with open(cwd_ttps, "rb") as fp:
+            with open(cwd_ttps, 'rb') as fp:
                 cls.ttp_descriptions = json.load(fp)
         else:
             log.warning(
-                "Missing TTP descriptions file. No TTP descriptions will be "
-                "added to matched Cuckoo signatures."
+                'Missing TTP descriptions file. No TTP descriptions will be '
+                'added to matched Cuckoo signatures.'
             )
 
     @classmethod
@@ -416,7 +416,7 @@ class RunSignatures:
         if not cls.check_signature_version(signature):
             return False
 
-        if hasattr(signature, "enable") and callable(signature.enable):
+        if hasattr(signature, 'enable') and callable(signature.enable):
             if not signature.enable():
                 return False
 
@@ -427,12 +427,12 @@ class RunSignatures:
         if not signature.platform:
             return True
 
-        task_platform = self.results.get("info", {}).get("platform")
+        task_platform = self.results.get('info', {}).get('platform')
 
         # Windows is implied when a platform has not been specified during the
         # submission of a sample, but for other platforms the platform has to
         # be explicitly stated.
-        if not task_platform and signature.platform == "windows":
+        if not task_platform and signature.platform == 'windows':
             return True
 
         return task_platform == signature.platform
@@ -446,18 +446,18 @@ class RunSignatures:
         """
         if not supported_version(cls.version, sig.minimum, sig.maximum):
             log.debug(
-                "You are running a version of Cuckoo that's not compatible "
-                "with this Signature (either it's too old or too new): "
-                "cuckoo=%s signature=%s minversion=%s maxversion=%s",
+                'You are running a version of Cuckoo that\'s not compatible '
+                'with this Signature (either it\'s too old or too new): '
+                'cuckoo=%s signature=%s minversion=%s maxversion=%s',
                 cls.version, sig.name, sig.minimum, sig.maximum
             )
             return False
 
-        if hasattr(sig, "run"):
+        if hasattr(sig, 'run'):
             log.warning(
-                "This signatures features one or more deprecated functions "
-                "which indicates that it is very likely an old-style "
-                "signature. Please upgrade this signature: %s.", sig.name
+                'This signatures features one or more deprecated functions '
+                'which indicates that it is very likely an old-style '
+                'signature. Please upgrade this signature: %s.', sig.name
             )
             return False
 
@@ -472,28 +472,28 @@ class RunSignatures:
                 for sig in self.signatures:
                     self.call_signature(sig, sig.on_signature, signature)
         except:
-            task_id = self.results.get("info", {}).get("id")
+            task_id = self.results.get('info', {}).get('id')
             log.exception(
-                "Failed to run '%s' of the %s signature",
+                'Failed to run "%s" of the %s signature',
                 handler.__name__, signature.name,
-                extra={"task_id": task_id}
+                extra={'task_id': task_id}
             )
         return True
 
     def yield_calls(self, proc):
         """Yield calls of interest to each interested signature."""
-        for idx, call in enumerate(proc.get("calls", [])):
-            api = call.get("api")
+        for idx, call in enumerate(proc.get('calls', [])):
+            api = call.get('api')
             sigs = self.api_sigs.get(api)
             if sigs is None:
                 # Build interested signatures
-                cat = call.get("category")
+                cat = call.get('category')
                 sigs = self.call_always.union(
                     self.call_for_api.get(api, set()),
                     self.call_for_cat.get(cat, set())
                 )
                 self.api_sigs[api] = sigs
-            name = "on_call_" + api
+            name = 'on_call_' + api
             for sig in sigs:
                 sig.cid, sig.call = idx, call
                 func = getattr(sig, name, sig.on_call)
@@ -509,30 +509,30 @@ class RunSignatures:
                         sig, sig.on_yara, category, filepath, match
                     )
 
-        target = self.results.get("target", {})
-        if target.get("category") == "file" and target.get("file"):
+        target = self.results.get('target', {})
+        if target.get('category') == 'file' and target.get('file'):
             loop_yara(
-                "sample",
-                self.results["target"]["file"]["path"],
-                self.results["target"]["file"]["yara"]
+                'sample',
+                self.results['target']['file']['path'],
+                self.results['target']['file']['yara']
             )
 
-        for procmem in self.results.get("procmemory", []):
+        for procmem in self.results.get('procmemory', []):
             # Yara matches on extracted PE files from process memory dumps.
-            for extr in procmem.get("extracted", []):
-                loop_yara("extracted", extr["path"], extr["yara"])
+            for extr in procmem.get('extracted', []):
+                loop_yara('extracted', extr['path'], extr['yara'])
 
             # Yara rules on the process memory dump itself.
-            loop_yara("procmem", procmem["file"], procmem["yara"])
+            loop_yara('procmem', procmem['file'], procmem['yara'])
 
-        for dropped in self.results.get("dropped", []):
-            loop_yara("dropped", dropped["path"], dropped["yara"])
+        for dropped in self.results.get('dropped', []):
+            loop_yara('dropped', dropped['path'], dropped['yara'])
 
-        for extr in self.results.get("extracted", []):
-            loop_yara("extracted", extr["raw"], extr["yara"])
+        for extr in self.results.get('extracted', []):
+            loop_yara('extracted', extr['raw'], extr['yara'])
 
     def process_extracted(self):
-        task_id = self.results.get("info", {}).get("id")
+        task_id = self.results.get('info', {}).get('id')
         if not task_id:
             return
 
@@ -546,14 +546,14 @@ class RunSignatures:
         for signature in self.signatures:
             signature.init()
 
-        log.debug("Running %d signatures", len(self.signatures))
+        log.debug('Running %d signatures', len(self.signatures))
 
         # Iterate calls and tell interested signatures about them.
-        for proc in self.results.get("behavior", {}).get("processes", []):
+        for proc in self.results.get('behavior', {}).get('processes', []):
 
             # Yield the new process event.
             for sig in self.signatures:
-                sig.pid = proc["pid"]
+                sig.pid = proc['pid']
                 self.call_signature(sig, sig.on_process, proc)
 
             self.yield_calls(proc)
@@ -566,9 +566,9 @@ class RunSignatures:
 
         # TODO This logic should certainly be moved elsewhere.
         self.c = Configuration()
-        for extracted in self.results.get("extracted", []):
-            if extracted["category"] == "config":
-                self.c.add(extracted["info"])
+        for extracted in self.results.get('extracted', []):
+            if extracted['category'] == 'config':
+                self.c.add(extracted['info'])
 
         # Yield completion events to each signature.
         for sig in self.signatures:
@@ -580,34 +580,34 @@ class RunSignatures:
                 continue
 
             log.debug(
-                "Analysis matched signature: %s", signature.name, extra={
-                    "action": "signature.match", "status": "success",
-                    "signature": signature.name,
-                    "severity": signature.severity,
+                'Analysis matched signature: %s', signature.name, extra={
+                    'action': 'signature.match', 'status': 'success',
+                    'signature': signature.name,
+                    'severity': signature.severity,
                 }
             )
             self.matched.append(signature.results())
             score += signature.severity
 
             for mark in signature.marks:
-                if mark["type"] == "config":
-                    self.c.add(mark["config"])
+                if mark['type'] == 'config':
+                    self.c.add(mark['config'])
 
         # Sort the matched signatures by their severity level and put them
         # into the results dictionary.
-        self.matched.sort(key=lambda key: key["severity"])
-        self.results["signatures"] = self.matched
-        if "info" in self.results:
-            self.results["info"]["score"] = score / 5.0
+        self.matched.sort(key=lambda key: key['severity'])
+        self.results['signatures'] = self.matched
+        if 'info' in self.results:
+            self.results['info']['score'] = score / 5.0
 
         # If malware configuration has been extracted, simplify its
         # accessibility in the analysis report.
         if self.c.results():
             # TODO Should this be included elsewhere?
-            if "metadata" in self.results:
-                self.results["metadata"]["cfgextr"] = self.c.results()
-            if "info" in self.results:
-                self.results["info"]["score"] = 10
+            if 'metadata' in self.results:
+                self.results['metadata']['cfgextr'] = self.c.results()
+            if 'info' in self.results:
+                self.results['info']['score'] = 10
 
 
 class RunReporting:
@@ -622,7 +622,7 @@ class RunReporting:
         """@param analysis_path: analysis folder path."""
         self.task = task
         self.results = results
-        self.analysis_path = cwd("storage", "analyses", "%s" % task["id"])
+        self.analysis_path = cwd('storage', 'analyses', '%s' % task['id'])
 
     def process(self, module):
         """Run a single reporting module.
@@ -635,21 +635,21 @@ class RunReporting:
             current = module()
         except:
             log.exception(
-                "Failed to load the reporting module: %s", module,
-                extra={"task_id": self.task["id"]}
+                'Failed to load the reporting module: %s', module,
+                extra={'task_id': self.task['id']}
             )
             return
 
         # Extract the module name.
         module_name = inspect.getmodule(current).__name__
-        if "." in module_name:
-            module_name = module_name.rsplit(".", 1)[1]
+        if '.' in module_name:
+            module_name = module_name.rsplit('.', 1)[1]
 
         try:
-            options = config2("reporting", module_name)
+            options = config2('reporting', module_name)
         except CuckooConfigurationError:
             log.debug(
-                "Reporting module %s not found in configuration file",
+                'Reporting module %s not found in configuration file',
                 module_name
             )
             return
@@ -667,22 +667,22 @@ class RunReporting:
 
         try:
             current.run(self.results)
-            log.debug("Executed reporting module \"%s\"", current.__class__.__name__)
+            log.debug('Executed reporting module "%s"', current.__class__.__name__)
         except CuckooDependencyError as e:
             log.warning(
-                "The reporting module \"%s\" has missing dependencies: %s",
+                'The reporting module "%s" has missing dependencies: %s',
                 current.__class__.__name__, e
             )
         except CuckooReportError as e:
             log.warning(
-                "The reporting module \"%s\" returned the following "
-                "error: %s", current.__class__.__name__, e
+                'The reporting module "%s" returned the following '
+                'error: %s', current.__class__.__name__, e
             )
         except:
             log.exception(
-                "Failed to run the reporting module: %s",
+                'Failed to run the reporting module: %s',
                 current.__class__.__name__,
-                extra={"task_id": self.task["id"]}
+                extra={'task_id': self.task['id']}
             )
 
     def run(self):
@@ -704,4 +704,4 @@ class RunReporting:
             for module in reporting_list:
                 self.process(module)
         else:
-            log.info("No reporting modules loaded")
+            log.info('No reporting modules loaded')
