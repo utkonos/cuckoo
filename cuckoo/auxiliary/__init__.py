@@ -7,5 +7,5 @@ from cuckoo.core.plugins import enumerate_plugins
 from cuckoo.common.abstracts import Auxiliary
 
 plugins = enumerate_plugins(
-    __file__, "cuckoo.auxiliary", globals(), Auxiliary
+    __file__, 'cuckoo.auxiliary', globals(), Auxiliary
 )
