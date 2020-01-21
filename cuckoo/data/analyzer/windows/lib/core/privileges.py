@@ -2,15 +2,16 @@
 # Copyright (C) 2014-2016 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 from ctypes import wintypes, POINTER
 
 from lib.common.defines import ADVAPI32, KERNEL32, SE_PRIVILEGE_ENABLED
 from lib.common.defines import LUID, TOKEN_PRIVILEGES
 from lib.common.defines import TOKEN_ALL_ACCESS, LUID_AND_ATTRIBUTES
 
+
 def grant_privilege(privilege):
     """Grant debug privileges.
+
     @param pid: PID.
     @return: operation status.
     """

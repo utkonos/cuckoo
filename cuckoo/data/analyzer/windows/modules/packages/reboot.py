@@ -1,12 +1,12 @@
 # Copyright (C) 2016 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import logging
 
 from lib.common.abstracts import Package
 
 log = logging.getLogger(__name__)
+
 
 class Reboot(Package):
     """Reboot analysis package."""
@@ -16,8 +16,8 @@ class Reboot(Package):
 
     def start(self, path):
         for category, args in self.analyzer.reboot:
-            if not hasattr(self, "_handle_%s" % category):
-                log.warning("Unhandled reboot command: %s", category)
+            if not hasattr(self, '_handle_%s' % category):
+                log.warning('Unhandled reboot command: %s', category)
                 continue
 
-            getattr(self, "_handle_%s" % category)(*args)
+            getattr(self, '_handle_%s' % category)(*args)

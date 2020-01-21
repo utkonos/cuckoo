@@ -2,7 +2,6 @@
 # Copyright (C) 2014-2016 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import logging
 import struct
 import _winreg
@@ -46,19 +45,22 @@ RegCloseKey = windll.advapi32.RegCloseKey
 RegCloseKey.argtypes = HANDLE,
 
 _rootkeys = {
-    "HKEY_LOCAL_MACHINE": _winreg.HKEY_LOCAL_MACHINE,
-    "HKEY_CURRENT_USER": _winreg.HKEY_CURRENT_USER,
+    'HKEY_LOCAL_MACHINE': _winreg.HKEY_LOCAL_MACHINE,
+    'HKEY_CURRENT_USER': _winreg.HKEY_CURRENT_USER,
 }
 
 _regtypes = {
-    "REG_DWORD": _winreg.REG_DWORD,
-    "REG_SZ": _winreg.REG_SZ,
-    "REG_BINARY": _winreg.REG_BINARY,
+    'REG_DWORD': _winreg.REG_DWORD,
+    'REG_SZ': _winreg.REG_SZ,
+    'REG_BINARY': _winreg.REG_BINARY,
 }
+
 
 def rename_regkey(skey, ssubkey, dsubkey):
     """Rename an entire tree of values in the registry.
-    Function by Thorsten Sick."""
+
+    Function by Thorsten Sick.
+    """
     res_handle = HANDLE()
     options = DWORD(0)
     res = RegOpenKeyExW(
@@ -73,11 +75,12 @@ def rename_regkey(skey, ssubkey, dsubkey):
 
         res = NtRenameKey(res_handle, pointer(us))
         if res:
-            log.warning("Error renaming %s\\%s to %s (0x%x)",
+            log.warning('Error renaming %s\\%s to %s (0x%x)',
                         skey, ssubkey, dsubkey, res % 2**32)
 
     if res_handle:
         RegCloseKey(res_handle)
+
 
 def regkey_exists(rootkey, subkey):
     res_handle = HANDLE()
@@ -87,15 +90,16 @@ def regkey_exists(rootkey, subkey):
     RegCloseKey(res_handle)
     return not res
 
+
 def set_regkey(rootkey, subkey, name, type_, value):
     if type_ == _winreg.REG_SZ:
         value = unicode(value)
         length = len(value) * 2 + 2
     elif type_ == _winreg.REG_MULTI_SZ:
-        value = u"\u0000".join(value) + u"\u0000\u0000"
+        value = u'\u0000'.join(value) + u'\u0000\u0000'
         length = len(value) * 2 + 2
     elif type_ == _winreg.REG_DWORD:
-        value = struct.pack("I", value)
+        value = struct.pack('I', value)
         length = 4
     else:
         length = len(value)
@@ -109,20 +113,23 @@ def set_regkey(rootkey, subkey, name, type_, value):
         RegSetValueExW(res_handle, name, 0, type_, value, length)
         RegCloseKey(res_handle)
 
+
 def set_regkey_full(regkey, type_, value):
-    components = regkey.split("\\")
+    components = regkey.split('\\')
     rootkey, subkey, name = components[0], components[1:-1], components[-1]
     if rootkey not in _rootkeys:
-        log.warning("Unknown root key for registry key: %s", rootkey)
+        log.warning('Unknown root key for registry key: %s', rootkey)
         return
 
     set_regkey(
-        _rootkeys[rootkey], "\\".join(subkey), name,
+        _rootkeys[rootkey], '\\'.join(subkey), name,
         _regtypes.get(type_, type_), value
     )
 
+
 def del_regkey(rootkey, regkey):
     RegDeleteKeyW(rootkey, regkey)
+
 
 def query_value(rootkey, subkey, name):
     res_handle = HANDLE()
@@ -141,10 +148,10 @@ def query_value(rootkey, subkey, name):
 
     if not res:
         if type_.value == _winreg.REG_SZ:
-            return value.raw[:length.value].decode("utf16").rstrip("\x00")
+            return value.raw[:length.value].decode('utf16').rstrip('\x00')
         if type_.value == _winreg.REG_MULTI_SZ:
-            value = value.raw[:length.value].decode("utf16")
-            return value.rstrip(u"\u0000").split(u"\u0000")
+            value = value.raw[:length.value].decode('utf16')
+            return value.rstrip(u'\u0000').split(u'\u0000')
         if type_.value == _winreg.REG_DWORD:
-            return struct.unpack("I", value.raw[:length.value])[0]
+            return struct.unpack('I', value.raw[:length.value])[0]
         return value.raw[:length.value]

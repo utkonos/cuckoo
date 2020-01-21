@@ -5,13 +5,14 @@
 
 from lib.common.abstracts import Package
 
+
 class Msi(Package):
     """MSI analysis package."""
 
     PATHS = [
-        ("System32", "msiexec.exe"),
+        ('System32', 'msiexec.exe'),
     ]
 
     def start(self, path):
-        msi_path = self.get_path("msiexec.exe")
-        return self.execute(msi_path, args=["/I", path])
+        msi_path = self.get_path('msiexec.exe')
+        return self.execute(msi_path, args=['/I', path])

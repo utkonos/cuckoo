@@ -2,7 +2,6 @@
 # Copyright (C) 2014-2019 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import logging
 import StringIO
 import threading
@@ -21,6 +20,7 @@ SHOT_DELAY = 1
 # SKIP_AREA = ((735, 575), (790, 595))
 SKIP_AREA = None
 
+
 class Screenshots(threading.Thread, Auxiliary):
     """Take screenshots."""
 
@@ -35,10 +35,11 @@ class Screenshots(threading.Thread, Auxiliary):
 
     def run(self):
         """Run screenshotting.
+
         @return: operation status.
         """
-        if "screenshots" in self.options:
-            self.do_run = int(self.options["screenshots"])
+        if 'screenshots' in self.options:
+            self.do_run = int(self.options['screenshots'])
 
         scr = Screenshot()
 
@@ -46,8 +47,8 @@ class Screenshots(threading.Thread, Auxiliary):
         # Interface can adequately inform the user about this missing library.
         if not scr.have_pil():
             log.info(
-                "Python Image Library (either PIL or Pillow) is not "
-                "installed, screenshots are disabled."
+                'Python Image Library (either PIL or Pillow) is not '
+                'installed, screenshots are disabled.'
             )
             return False
 
@@ -60,7 +61,7 @@ class Screenshots(threading.Thread, Auxiliary):
             try:
                 img_current = scr.take()
             except IOError as e:
-                log.error("Cannot take screenshot: %s", e)
+                log.error('Cannot take screenshot: %s', e)
                 continue
 
             if img_last and scr.equal(img_last, img_current, SKIP_AREA):
@@ -70,13 +71,13 @@ class Screenshots(threading.Thread, Auxiliary):
 
             # workaround as PIL can't write to the socket file object :(
             tmpio = StringIO.StringIO()
-            img_current.save(tmpio, format="JPEG")
+            img_current.save(tmpio, format='JPEG')
             tmpio.seek(0)
 
             # now upload to host from the StringIO
             try:
                 nf = NetlogFile()
-                nf.init("shots/%04d.jpg" % img_counter)
+                nf.init('shots/%04d.jpg' % img_counter)
 
                 for chunk in tmpio:
                     nf.sock.sendall(chunk)

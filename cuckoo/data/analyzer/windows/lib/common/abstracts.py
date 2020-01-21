@@ -2,7 +2,6 @@
 # Copyright (C) 2014-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import glob
 import os
 
@@ -12,8 +11,10 @@ from lib.api.process import Process
 from lib.common.decide import dump_memory
 from lib.common.exceptions import CuckooPackageError
 
-class Package(object):
+
+class Package:
     """Base abstract analysis package."""
+
     PATHS = []
     REGKEYS = []
 
@@ -24,19 +25,21 @@ class Package(object):
         self.pids = []
 
         # Fetch the current working directory, defaults to $TEMP.
-        if "curdir" in options:
-            self.curdir = os.path.expandvars(options["curdir"])
+        if 'curdir' in options:
+            self.curdir = os.path.expandvars(options['curdir'])
         else:
-            self.curdir = os.getenv("TEMP")
+            self.curdir = os.getenv('TEMP')
 
     def set_pids(self, pids):
         """Update list of monitored PIDs in the package context.
+
         @param pids: list of pids.
         """
         self.pids = pids
 
     def start(self, target):
         """Run analysis package.
+
         @raise NotImplementedError: this method is abstract.
         """
         raise NotImplementedError
@@ -48,18 +51,18 @@ class Package(object):
     def enum_paths(self):
         """Enumerate available paths."""
         basepaths = {
-            "System32": [
-                os.path.join(os.getenv("SystemRoot"), "System32"),
-                os.path.join(os.getenv("SystemRoot"), "SysWOW64"),
+            'System32': [
+                os.path.join(os.getenv('SystemRoot'), 'System32'),
+                os.path.join(os.getenv('SystemRoot'), 'SysWOW64'),
             ],
-            "ProgramFiles": [
-                os.getenv("ProgramFiles").replace(" (x86)", ""),
-                os.getenv("ProgramFiles(x86)"),
+            'ProgramFiles': [
+                os.getenv('ProgramFiles').replace(' (x86)', ''),
+                os.getenv('ProgramFiles(x86)'),
             ],
-            "HomeDrive": [
+            'HomeDrive': [
                 # os.path.join() doesn't work well if you give it just "C:"
                 # so manually append a backslash.
-                os.getenv("HomeDrive") + "\\",
+                os.getenv('HomeDrive') + '\\',
             ],
         }
 
@@ -73,6 +76,7 @@ class Package(object):
 
     def get_path(self, application):
         """Search for the application in all available paths.
+
         @param applicaiton: application executable name
         @return: executable path
         """
@@ -80,11 +84,12 @@ class Package(object):
             if os.path.isfile(path):
                 return path
 
-        raise CuckooPackageError("Unable to find any %s executable." %
+        raise CuckooPackageError('Unable to find any %s executable.' %
                                  application)
 
     def get_path_glob(self, application):
         """Search for the application in all available paths with glob support.
+
         @param applicaiton: application executable name
         @return: executable path
         """
@@ -93,12 +98,12 @@ class Package(object):
                 if os.path.isfile(path):
                     return path
 
-        raise CuckooPackageError("Unable to find any %s executable." %
+        raise CuckooPackageError('Unable to find any %s executable.' %
                                  application)
 
     def move_curdir(self, filepath):
-        """Move a file to the current working directory so it can be executed
-        from there.
+        """Move a file to the current working directory so it can be executed from there.
+
         @param filepath: the file to be moved
         @return: the new filepath
         """
@@ -107,8 +112,8 @@ class Package(object):
         return outpath
 
     def init_regkeys(self, regkeys):
-        """Initialize the registry to avoid annoying popups, configure
-        settings, etc.
+        """Initialize the registry to avoid annoying popups, configure settings, etc.
+
         @param regkeys: the root keys, subkeys, and key/value pairs.
         """
         for rootkey, subkey, values in regkeys:
@@ -121,16 +126,17 @@ class Package(object):
                     SetValueEx(key_handle, key, 0, REG_DWORD, value)
                 elif isinstance(value, dict):
                     self.init_regkeys([
-                        [rootkey, "%s\\%s" % (subkey, key), value],
+                        [rootkey, '%s\\%s' % (subkey, key), value],
                     ])
                 else:
-                    raise CuckooPackageError("Invalid value type: %r" % value)
+                    raise CuckooPackageError('Invalid value type: %r' % value)
 
             CloseKey(key_handle)
 
     def execute(self, path, args, mode=None, maximize=False, env=None,
                 source=None, trigger=None):
         """Start an executable for analysis.
+
         @param path: executable path
         @param args: executable arguments
         @param mode: monitor mode - which functions to instrument
@@ -140,20 +146,20 @@ class Package(object):
         @param trigger: trigger to indicate analysis start
         @return: process pid
         """
-        dll = self.options.get("dll")
-        free = self.options.get("free")
-        analysis = self.options.get("analysis")
+        dll = self.options.get('dll')
+        free = self.options.get('free')
+        analysis = self.options.get('analysis')
 
         # Kernel analysis overrides the free argument.
-        if analysis == "kernel":
+        if analysis == 'kernel':
             free = True
 
-        source = source or self.options.get("from")
-        mode = mode or self.options.get("mode")
+        source = source or self.options.get('from')
+        mode = mode or self.options.get('mode')
 
-        if not trigger and self.options.get("trigger"):
-            if self.options["trigger"] == "exefile":
-                trigger = "file:%s" % path
+        if not trigger and self.options.get('trigger'):
+            if self.options['trigger'] == 'exefile':
+                trigger = 'file:%s' % path
 
         # Setup pre-defined registry keys.
         self.init_regkeys(self.REGKEYS)
@@ -163,13 +169,14 @@ class Package(object):
                          curdir=self.curdir, source=source, mode=mode,
                          maximize=maximize, env=env, trigger=trigger):
             raise CuckooPackageError(
-                "Unable to execute the initial process, analysis aborted."
+                'Unable to execute the initial process, analysis aborted.'
             )
 
         return p.pid
 
     def package_files(self):
         """Return a list of files to upload to host.
+
         The list should be a list of tuples (<path on guest>, <name of file in package_files folder>).
         (package_files is a folder that will be created in analysis folder).
         """
@@ -177,16 +184,18 @@ class Package(object):
 
     def finish(self):
         """Finish run.
+
         If specified to do so, this method dumps the memory of
         all running processes.
         """
-        if self.options.get("procmemdump"):
+        if self.options.get('procmemdump'):
             for pid in self.pids:
                 dump_memory(pid)
 
         return True
 
-class Auxiliary(object):
+
+class Auxiliary:
     def __init__(self, options={}, analyzer=None):
         self.options = options
         self.analyzer = analyzer
