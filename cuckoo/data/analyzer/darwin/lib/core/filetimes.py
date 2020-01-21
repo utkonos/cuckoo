@@ -22,10 +22,8 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""Tools to convert between Python datetime instances and Microsoft times.
-"""
+"""Tools to convert between Python datetime instances and Microsoft times."""
 from calendar import timegm
-
 
 # http://support.microsoft.com/kb/167296
 # How To Convert a UNIX time_t to a Win32 FILETIME or SYSTEMTIME

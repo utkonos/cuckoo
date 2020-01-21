@@ -2,7 +2,6 @@
 # Copyright (C) 2014-2016 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import time
 import logging
 import StringIO
@@ -19,6 +18,7 @@ SHOT_DELAY = 1
 # SKIP_AREA = ((735, 575), (790, 595))
 SKIP_AREA = None
 
+
 class Screenshots(Auxiliary, Thread):
     """Take screenshots."""
 
@@ -33,14 +33,15 @@ class Screenshots(Auxiliary, Thread):
 
     def run(self):
         """Run screenshotting.
+
         @return: operation status.
         """
-        if "screenshots" in self.options:
-            self.do_run = int(self.options["screenshots"])
+        if 'screenshots' in self.options:
+            self.do_run = int(self.options['screenshots'])
 
         if not Screenshot().have_pil():
-            log.warning("Python Image Library is not installed, "
-                        "screenshots are disabled")
+            log.warning('Python Image Library is not installed, '
+                        'screenshots are disabled')
             return False
 
         img_counter = 0
@@ -52,7 +53,7 @@ class Screenshots(Auxiliary, Thread):
             try:
                 img_current = Screenshot().take()
             except IOError as e:
-                log.error("Cannot take screenshot: %s", e)
+                log.error('Cannot take screenshot: %s', e)
                 continue
 
             if img_last:
@@ -63,11 +64,11 @@ class Screenshots(Auxiliary, Thread):
 
             # workaround as PIL can't write to the socket file object :(
             tmpio = StringIO.StringIO()
-            img_current.save(tmpio, format="PNG")
+            img_current.save(tmpio, format='PNG')
             tmpio.seek(0)
 
             # now upload to host from the StringIO
-            nf = NetlogFile("shots/%s.png" % str(img_counter).rjust(4, "0"))
+            nf = NetlogFile('shots/%s.png' % str(img_counter).rjust(4, '0'))
 
             for chunk in tmpio:
                 nf.sock.sendall(chunk)

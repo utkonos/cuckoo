@@ -1,8 +1,8 @@
 # Copyright (C) 2014-2016 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import ConfigParser
+
 
 class Config:
     def __init__(self, cfg):
@@ -12,7 +12,7 @@ class Config:
 
         for section in config.sections():
             for name, raw_value in config.items(section):
-                if name == "file_name":
+                if name == 'file_name':
                     value = config.get(section, name)
                 else:
                     try:
@@ -26,6 +26,7 @@ class Config:
 
     def get_options(self):
         """Get analysis options.
+
         @return: options dict.
         """
         # The analysis package can be provided with some options in the
@@ -35,10 +36,10 @@ class Config:
         # Here we parse such options and provide a dictionary that will be made
         # accessible to the analysis package.
         options = {}
-        if hasattr(self, "options") and len(self.options) > 0:
+        if hasattr(self, 'options') and len(self.options) > 0:
             try:
                 # Split the options by comma.
-                fields = self.options.split(",")
+                fields = self.options.split(',')
             except ValueError:
                 pass
             else:
@@ -48,12 +49,12 @@ class Config:
                         # Sometimes, we have a key without a value (i.e. it's a
                         # command line argument), so we can't use the
                         # `key, value = field.split("=", 1)` style here
-                        parts = field.split("=", 1)
+                        parts = field.split('=', 1)
                     except ValueError:
                         pass
                     else:
                         key = parts[0].strip()
-                        arg_prefix = "arg-"
+                        arg_prefix = 'arg-'
                         if not key.startswith(arg_prefix):
                             # If the parsing went good, we add the option to the
                             # dictionary.
@@ -63,6 +64,6 @@ class Config:
                             # Remove "arg-" prefix from the key
                             key = key[4:]; parts[0] = key
                             # Add this key (with a value maybe) to the args
-                            if "args" not in options: options["args"] = []
-                            options["args"] += parts
+                            if 'args' not in options: options['args'] = []
+                            options['args'] += parts
         return options

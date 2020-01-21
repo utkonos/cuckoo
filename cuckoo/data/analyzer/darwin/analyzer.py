@@ -1,7 +1,6 @@
 # Copyright (C) 2015-2018 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import hashlib
 import logging
 import os
@@ -25,7 +24,8 @@ from modules import auxiliary
 
 log = logging.getLogger("analyzer")
 
-class Macalyzer(object):
+
+class Macalyzer:
     """Cuckoo OS X analyser.
     """
 
@@ -108,7 +108,7 @@ class Macalyzer(object):
     def _detect_target(self):
         if self.config.category == "file":
             self.target = os.path.join("/tmp/", str(self.config.file_name))
-        else: # It's not a file, but a URL
+        else:  # It's not a file, but a URL
             self.target = self.config.target
 
     def _setup_analysis_package(self):
@@ -120,15 +120,15 @@ class Macalyzer(object):
         else:
             suggestion = None
         # Try to figure out what analysis package to use with this target
-        kwargs = {"suggestion" : suggestion}
+        kwargs = {"suggestion": suggestion}
         package_class = choose_package_class(self.config.file_type,
                                              self.config.file_name, **kwargs)
         if not package_class:
             raise Exception("Could not find an appropriate analysis package")
         # Package initialization
         kwargs = {
-            "options" : self.config.get_options(),
-            "timeout" : self.config.timeout
+            "options": self.config.get_options(),
+            "timeout": self.config.timeout
         }
         return package_class(self.target, self.host, **kwargs)
 
@@ -156,6 +156,7 @@ class Macalyzer(object):
         except IOError as e:
             self.log.error("Unable to upload dropped file at path \"%s\": %s", filepath, e)
 
+
 def _create_result_folders():
     for _, folder in PATHS.items():
         if os.path.exists(folder):
@@ -179,7 +180,6 @@ def _setup_logging():
     netlog.setFormatter(formatter)
     logger.addHandler(netlog)
     logger.setLevel(logging.DEBUG)
-
 
 
 if __name__ == "__main__":
@@ -209,7 +209,7 @@ if __name__ == "__main__":
             # Establish connection with the agent XMLRPC server.
             server = xmlrpclib.Server("http://127.0.0.1:8000")
             server.complete(success, error, PATHS["root"])
-        except Exception as e:
+        except Exception:
             # new agent
             data = {
                 "status": "complete",

@@ -3,7 +3,8 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-class Auxiliary(object):
+
+class Auxiliary:
     def __init__(self, options={}, analyzer=None):
         self.options = options
         self.analyzer = analyzer
