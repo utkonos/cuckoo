@@ -1,8 +1,8 @@
 # Copyright (C) 2014-2016 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import ConfigParser
+
 
 class Config:
     def __init__(self, cfg):
@@ -12,7 +12,7 @@ class Config:
 
         for section in config.sections():
             for name, raw_value in config.items(section):
-                if name == "file_name":
+                if name == 'file_name':
                     value = config.get(section, name)
                 else:
                     try:
@@ -31,6 +31,7 @@ class Config:
 
     def get_options(self):
         """Get analysis options.
+
         @return: options dict.
         """
         # The analysis package can be provided with some options in the
@@ -40,17 +41,17 @@ class Config:
         # Here we parse such options and provide a dictionary that will be made
         # accessible to the analysis package.
         options = {}
-        if hasattr(self, "options"):
+        if hasattr(self, 'options'):
             try:
                 # Split the options by comma.
-                fields = self.options.split(",")
-            except ValueError as e:
+                fields = self.options.split(',')
+            except ValueError:
                 pass
             else:
                 for field in fields:
                     # Split the name and the value of the option.
                     try:
-                        key, value = field.split("=", 1)
+                        key, value = field.split('=', 1)
                     except ValueError:
                         pass
                     else:
