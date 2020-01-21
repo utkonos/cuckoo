@@ -11,6 +11,7 @@ init_settings()
 
 config = context.config
 
+
 def run_migrations():
     engine = create_engine(settings.SQLALCHEMY_DATABASE_URI,
                            poolclass=pool.NullPool)
@@ -23,5 +24,6 @@ def run_migrations():
             context.run_migrations()
     finally:
         connection.close()
+
 
 run_migrations()
