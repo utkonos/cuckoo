@@ -15,7 +15,7 @@ fileConfig(context.config.config_file_name)
 from cuckoo.core.database import Base, Database
 from cuckoo.misc import set_cwd
 
-set_cwd(context.get_x_argument(as_dictionary=True)["cwd"])
+set_cwd(context.get_x_argument(as_dictionary=True)['cwd'])
 Database().connect(schema_check=False, create=False)
 
 # Get database connection string from cuckoo configuration.
