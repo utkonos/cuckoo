@@ -1,7 +1,6 @@
 # Copyright (C) 2014-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import datetime
 import logging
 import os.path
@@ -16,9 +15,10 @@ from cuckoo.distributed.misc import settings
 
 log = logging.getLogger(__name__)
 
+
 def scheduler():
     while True:
-        nodes = Node.query.filter_by(enabled=True, mode="normal").all()
+        nodes = Node.query.filter_by(enabled=True, mode='normal').all()
         random.shuffle(nodes)
         for node in nodes:
             # Check how many tasks have already been assigned for this node.
@@ -29,12 +29,12 @@ def scheduler():
             # Fetch the status of this node.
             status = node_status(node.url)
             if not status:
-                log.debug("Error retrieving status of node %s", node.name)
+                log.debug('Error retrieving status of node %s', node.name)
                 time.sleep(settings.interval)
                 continue
 
             # Check whether this node still has enough samples to work with.
-            if status["tasks"]["pending"] >= settings.threshold:
+            if status['tasks']['pending'] >= settings.threshold:
                 continue
 
             # Schedule new samples for this node.
@@ -44,11 +44,12 @@ def scheduler():
                 task.assign_node(node.id)
 
             if tasks:
-                log.debug("Assigned %d tasks to %s", len(tasks), node.name)
+                log.debug('Assigned %d tasks to %s', len(tasks), node.name)
 
             db.session.commit()
 
         time.sleep(10)
+
 
 def status_caching():
     def fetch_stats(tasks):
@@ -64,36 +65,37 @@ def status_caching():
         today = Task.query.filter(Task.completed > yesterday)
 
         status = {
-            "all": fetch_stats(Task.query),
-            "prio1": fetch_stats(Task.query.filter_by(priority=1)),
-            "prio2": fetch_stats(Task.query.filter_by(priority=2)),
-            "today": fetch_stats(today),
-            "today1": fetch_stats(today.filter_by(priority=1)),
-            "today2": fetch_stats(today.filter_by(priority=2)),
+            'all': fetch_stats(Task.query),
+            'prio1': fetch_stats(Task.query.filter_by(priority=1)),
+            'prio2': fetch_stats(Task.query.filter_by(priority=2)),
+            'today': fetch_stats(today),
+            'today1': fetch_stats(today.filter_by(priority=1)),
+            'today2': fetch_stats(today.filter_by(priority=2)),
         }
 
-        ns = NodeStatus("dist.scheduler", datetime.datetime.now(), status)
+        ns = NodeStatus('dist.scheduler', datetime.datetime.now(), status)
         db.session.add(ns)
         db.session.commit()
 
         time.sleep(30)
 
+
 def handle_node(instance):
     node = Node.query.filter_by(name=instance).first()
     if not node:
-        log.critical("Node not found: %s", instance)
+        log.critical('Node not found: %s', instance)
         return
 
     while True:
         # Fetch the status of this node.
         status = node_status(node.url)
         if not status:
-            log.debug("Error retrieving status of node %s", node.name)
+            log.debug('Error retrieving status of node %s', node.name)
             time.sleep(settings.interval)
             continue
 
         # Include the timestamp of when we retrieved this status.
-        status["timestamp"] = int(time.time())
+        status['timestamp'] = int(time.time())
 
         # Add this node status to the database for monitoring purposes.
         ns = NodeStatus(node.name, datetime.datetime.now(), status)
@@ -101,7 +103,7 @@ def handle_node(instance):
         db.session.commit()
 
         # Submission of new tasks.
-        if status["tasks"]["pending"] < settings.threshold:
+        if status['tasks']['pending'] < settings.threshold:
             q = Task.query.filter_by(node_id=node.id, status=Task.ASSIGNED)
             q = q.order_by(Task.priority.desc(), Task.id)
             tasks = q.limit(settings.threshold).all()
@@ -114,29 +116,29 @@ def handle_node(instance):
                 t.status = Task.PROCESSING
                 t.delegated = datetime.datetime.now()
 
-            log.debug("Submitted %d tasks to %s", len(tasks), node.name)
+            log.debug('Submitted %d tasks to %s', len(tasks), node.name)
             db.session.commit()
 
         # Fetching of reports.
-        tasks = fetch_tasks(node.url, "reported", settings.threshold)
+        tasks = fetch_tasks(node.url, 'reported', settings.threshold)
         for task in tasks:
             # The node_id/task_id tuple isn't necessarily unique, therefore
             # also filter on the status. Just in case older analyses didn't
             # finish, we request the last one.
             t = Task.query.filter_by(
-                node_id=node.id, task_id=task["id"], status=Task.PROCESSING
+                node_id=node.id, task_id=task['id'], status=Task.PROCESSING
             ).order_by(Task.id.desc()).first()
 
             if t is None:
-                log.debug("Node %s task #%d has not been submitted "
-                          "by us!", instance, task["id"])
+                log.debug('Node %s task #%d has not been submitted '
+                          'by us!', instance, task['id'])
 
                 # Should we delete this task? Improve through the usage of
                 # the "owner" parameter. TODO Reintroduce.
                 # delete_task(node.url, task["id"])
                 continue
 
-            dirpath = os.path.join(settings.reports_directory, "%d" % t.id)
+            dirpath = os.path.join(settings.reports_directory, '%d' % t.id)
             if not os.path.isdir(dirpath):
                 os.makedirs(dirpath)
 
@@ -146,18 +148,18 @@ def handle_node(instance):
                     store_report(node.url, t.task_id, report_format, dirpath)
                 except InvalidReport as e:
                     log.critical(
-                        "Error fetching report for task #%d (%s.%d): %s",
+                        'Error fetching report for task #%d (%s.%d): %s',
                         t.id, node.name, t.task_id, e
                     )
 
             # Fetch the pcap file.
             if settings.pcap:
-                pcap_path = os.path.join(dirpath, "dump.pcap")
+                pcap_path = os.path.join(dirpath, 'dump.pcap')
                 try:
                     fetch_pcap(node.url, t.task_id, pcap_path)
                 except InvalidPcap as e:
                     log.critical(
-                        "Error fetching pcap for task #%d (%s.%d): %s",
+                        'Error fetching pcap for task #%d (%s.%d): %s',
                         t.id, node.name, t.task_id, e
                     )
 
@@ -166,11 +168,11 @@ def handle_node(instance):
             delete_task(node.url, t.task_id)
 
             t.status = Task.FINISHED
-            t.started = datetime.datetime.strptime(task["started_on"],
-                                                   "%Y-%m-%d %H:%M:%S")
+            t.started = datetime.datetime.strptime(task['started_on'],
+                                                   '%Y-%m-%d %H:%M:%S')
             t.completed = datetime.datetime.now()
 
-        log.debug("Fetched %d reports from %s", len(tasks), node.name)
+        log.debug('Fetched %d reports from %s', len(tasks), node.name)
 
         db.session.commit()
         time.sleep(settings.interval)

@@ -1,7 +1,6 @@
 # Copyright (C) 2014-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import datetime
 import json
 
@@ -9,11 +8,12 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.inspection import inspect
 
 db = SQLAlchemy(session_options=dict(autoflush=True))
-ALEMBIC_VERSION = "701e3dde12ba"
+ALEMBIC_VERSION = '701e3dde12ba'
 
 null = None
 
-class Serializer(object):
+
+class Serializer:
     """Serialize a query result object."""
     def to_dict(self):
         ret = {}
@@ -21,15 +21,17 @@ class Serializer(object):
             ret[key] = getattr(self, key)
         return ret
 
+
 class StringList(db.TypeDecorator):
     """List of comma-separated strings as field."""
     impl = db.Text
 
     def process_bind_param(self, value, dialect):
-        return ", ".join(value)
+        return ', '.join(value)
 
     def process_result_value(self, value, dialect):
-        return value.split(", ")
+        return value.split(', ')
+
 
 class JsonType(db.TypeDecorator):
     """List of comma-separated strings as field."""
@@ -41,6 +43,7 @@ class JsonType(db.TypeDecorator):
     def process_result_value(self, value, dialect):
         return json.loads(value)
 
+
 class Node(db.Model):
     """Cuckoo node database model."""
     id = db.Column(db.Integer, primary_key=True)
@@ -48,7 +51,7 @@ class Node(db.Model):
     url = db.Column(db.Text, nullable=False)
     mode = db.Column(db.Text, nullable=False)
     enabled = db.Column(db.Boolean, nullable=False)
-    machines = db.relationship("Machine", backref="node", lazy="dynamic")
+    machines = db.relationship('Machine', backref='node', lazy='dynamic')
 
     def __init__(self, name, url, mode, enabled=True):
         self.name = name
@@ -56,29 +59,31 @@ class Node(db.Model):
         self.mode = mode
         self.enabled = enabled
 
+
 class Machine(db.Model):
     """Machine database model related to a Cuckoo node."""
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, nullable=False)
     platform = db.Column(db.Text, nullable=False)
     tags = db.Column(StringList)
-    node_id = db.Column(db.Integer, db.ForeignKey("node.id"))
+    node_id = db.Column(db.Integer, db.ForeignKey('node.id'))
 
     def __init__(self, name, platform, tags):
         self.name = name
         self.platform = platform
         self.tags = tags
 
+
 class Task(db.Model, Serializer):
     """Analysis task database model."""
-    PENDING = "pending"
-    ASSIGNED = "assigned"
-    PROCESSING = "processing"
-    FINISHED = "finished"
-    DELETED = "deleted"
+    PENDING = 'pending'
+    ASSIGNED = 'assigned'
+    PROCESSING = 'processing'
+    FINISHED = 'finished'
+    DELETED = 'deleted'
 
     task_status = db.Enum(PENDING, ASSIGNED, PROCESSING, FINISHED, DELETED,
-                          name="task_status_type")
+                          name='task_status_type')
 
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.Text)
@@ -97,7 +102,7 @@ class Task(db.Model, Serializer):
     enforce_timeout = db.Column(db.Text)
 
     # Cuckoo node and Task ID this has been submitted to.
-    node_id = db.Column(db.Integer, db.ForeignKey("node.id"))
+    node_id = db.Column(db.Integer, db.ForeignKey('node.id'))
     task_id = db.Column(db.Integer)
     status = db.Column(task_status, nullable=False)
 
@@ -112,13 +117,13 @@ class Task(db.Model, Serializer):
     completed = db.Column(db.DateTime(timezone=False), nullable=True)
 
     __table_args__ = (
-        db.Index("ix_node_task", node_id, task_id),
+        db.Index('ix_node_task', node_id, task_id),
         db.Index(
-            "ix_completed_not_null", completed,
+            'ix_completed_not_null', completed,
             postgresql_where=completed != null
         ),
         db.Index(
-            "ix_status_ltfinished_submitted", submitted, status,
+            'ix_status_ltfinished_submitted', submitted, status,
             postgresql_where=status < FINISHED
         )
     )
@@ -150,6 +155,7 @@ class Task(db.Model, Serializer):
         self.status = Task.ASSIGNED
         self.node_id = node_id
 
+
 class NodeStatus(db.Model, Serializer):
     """Node status monitoring database model."""
     id = db.Column(db.Integer, primary_key=True)
@@ -162,6 +168,7 @@ class NodeStatus(db.Model, Serializer):
         self.name = name
         self.timestamp = timestamp
         self.status = status
+
 
 class AlembicVersion(db.Model):
     """Support model for keeping track of the alembic revision identifier."""

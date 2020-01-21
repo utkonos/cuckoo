@@ -1,27 +1,28 @@
 # Copyright (C) 2016-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import datetime
 
 from cuckoo.common.utils import Singleton
 from cuckoo.misc import cwd
 
-class settings(object):
-    """Settings object containing the various configurable components of
-    Distributed Cuckoo."""
+
+class settings:
+    """Settings object containing the various configurable components of Distributed Cuckoo."""
+
 
 def init_settings():
     s = {}
-    execfile(cwd("distributed", "settings.py"), s)
+    execfile(cwd('distributed', 'settings.py'), s)
 
     for key, value in s.items():
-        if key.startswith("_"):
+        if key.startswith('_'):
             continue
 
         setattr(settings, key, value)
 
-class StatsCache(object):
+
+class StatsCache:
     """Used to cache values. Values are stored under a group name. This
     group name contains keys which a datetime strings rounded to a step size.
     The key can contain a given str prefix. A step size is an int representing
@@ -31,14 +32,14 @@ class StatsCache(object):
     """
 
     __metaclass__ = Singleton
-    dt_ftm = "%Y-%m-%d %H:%M:%S"
+    dt_ftm = '%Y-%m-%d %H:%M:%S'
     max_cache_days = 60
 
     def __init__(self):
         self._init_stats()
 
     def update(self, name, step_size, increment_by=1, default={},
-               set_value=None, set_dt=None, key_prefix=""):
+               set_value=None, set_dt=None, key_prefix=''):
         """Set or increment value for given name/group under current time
         rounded to nearest stepsize in minutes.
         @param name: Key under which (prefix)datetime keys with cache
@@ -71,14 +72,14 @@ class StatsCache(object):
                 set_dt, step_size
             ).strftime(self.dt_ftm)
 
-            key = "%s%s" % (key_prefix, dt_step)
+            key = '%s%s' % (key_prefix, dt_step)
             self.stats[name][key] = set_value
         else:
             if key not in self.stats[name]:
                 self.stats[name][key] = 0
             self.stats[name][key] += increment_by
 
-    def get_stat(self, name, dt, step_size, key_prefix=""):
+    def get_stat(self, name, dt, step_size, key_prefix=''):
         """Retrieve value under given name for datetime obj rounded to
         given nearest step size with key prefix if given. Returns
         None if no cached value or given dt is now"""
@@ -91,7 +92,7 @@ class StatsCache(object):
         # Never return a cache value for current time, since these values
         # can still change
         if dt < datetime.datetime.now():
-            return self.stats[name].get("%s%s" % (
+            return self.stats[name].get('%s%s' % (
                 key_prefix, dt.strftime(self.dt_ftm)
             ))
         else:
@@ -102,8 +103,8 @@ class StatsCache(object):
             days=self.max_cache_days
         )
         self.stats = {
-            "_info": {
-                "since": datetime.datetime.now()
+            '_info': {
+                'since': datetime.datetime.now()
             }
         }
 

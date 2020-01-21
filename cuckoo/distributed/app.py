@@ -1,7 +1,6 @@
 # Copyright (C) 2015-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import flask
 import os.path
 import sys
@@ -11,11 +10,12 @@ from cuckoo.distributed.misc import settings, init_settings
 from cuckoo.distributed.views import blueprints
 from cuckoo.misc import cwd
 
+
 def create_app():
     app = flask.Flask(
-        "Distributed Cuckoo",
-        template_folder=cwd("..", "distributed", "templates", private=True),
-        static_folder=cwd("..", "distributed", "static", private=True),
+        'Distributed Cuckoo',
+        template_folder=cwd('..', 'distributed', 'templates', private=True),
+        static_folder=cwd('..', 'distributed', 'static', private=True),
     )
 
     init_settings()
@@ -36,34 +36,34 @@ def create_app():
             db.session.add(AlembicVersion(AlembicVersion.VERSION))
             db.session.commit()
         elif row.version_num != AlembicVersion.VERSION:
-            sys.exit("Your database is not up-to-date, please upgrade it "
-                     "(run `cuckoo distributed migrate`).")
+            sys.exit('Your database is not up-to-date, please upgrade it '
+                     '(run `cuckoo distributed migrate`).')
 
     # Further check the configuration.
     if not settings.SQLALCHEMY_DATABASE_URI:
-        sys.exit("Please configure a database connection.")
+        sys.exit('Please configure a database connection.')
 
     if not settings.report_formats:
-        sys.exit("Please configure one or more reporting formats.")
+        sys.exit('Please configure one or more reporting formats.')
 
     if not settings.samples_directory or \
             not os.path.isdir(settings.samples_directory):
-        sys.exit("Please configure a samples directory path.")
+        sys.exit('Please configure a samples directory path.')
 
     if not settings.reports_directory or \
             not os.path.isdir(settings.reports_directory):
-        sys.exit("Please configure a reports directory path.")
+        sys.exit('Please configure a reports directory path.')
 
     @app.after_request
     def custom_headers(response):
         """Set some custom headers across all HTTP responses."""
-        response.headers["Server"] = "Distributed Machete Server"
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Cache-Control"] = "no-cache"
-        response.headers["Expires"] = "0"
+        response.headers['Server'] = 'Distributed Machete Server'
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Cache-Control'] = 'no-cache'
+        response.headers['Expires'] = '0'
         return response
 
     return app
