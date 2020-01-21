@@ -20,7 +20,7 @@ class KVM(LibVirtMachinery):
         """Init KVM configuration to open libvirt dsn connection."""
         self._sessions = {}
         if not self.options.kvm.dsn:
-            raise CuckooMachineError("KVM(i) DSN is missing, please add it to the config file")
+            raise CuckooMachineError('KVM(i) DSN is missing, please add it to the config file')
         self.dsn = self.options.kvm.dsn
         super(KVM, self)._initialize_check()
 
@@ -29,7 +29,7 @@ class KVM(LibVirtMachinery):
         try:
             return libvirt.open(self.dsn)
         except libvirt.libvirtError as libvex:
-            raise CuckooCriticalError("libvirt returned an exception on connection: %s" % libvex)
+            raise CuckooCriticalError('libvirt returned an exception on connection: %s' % libvex)
 
     def _disconnect(self, conn):
         """Disconnect, ignore request to disconnect."""

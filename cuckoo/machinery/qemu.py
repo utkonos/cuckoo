@@ -1,7 +1,6 @@
 # Copyright (C) 2015-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import os
 import time
 import logging
@@ -21,95 +20,96 @@ log = logging.getLogger(__name__)
 #  anyways, if someone has a cleaner suggestion for this, let me know
 #  -> for now, just modify this to your needs
 QEMU_ARGS = {
-    "default": {
-        "cmdline": ["qemu-system-x86_64", "-display", "none"],
-        "params": {
-            "memory": "512M",
-            "mac": "52:54:00:12:34:56",
-            "kernel": "{imagepath}/vmlinuz",
+    'default': {
+        'cmdline': ['qemu-system-x86_64', '-display', 'none'],
+        'params': {
+            'memory': '512M',
+            'mac': '52:54:00:12:34:56',
+            'kernel': '{imagepath}/vmlinuz',
         },
     },
-    "mipsel": {
-        "cmdline": [
-            "qemu-system-mipsel", "-display", "none", "-M", "malta", "-m", "{memory}",
-            "-kernel", "{kernel}",
-            "-hda", "{snapshot_path}",
-            "-append", "root=/dev/sda1 console=tty0",
-            "-netdev", "tap,id=net_{vmname},ifname=tap_{vmname},script=no,downscript=no",
-            "-device", "e1000,netdev=net_{vmname},mac={mac}",  # virtio-net-pci doesn't work here
+    'mipsel': {
+        'cmdline': [
+            'qemu-system-mipsel', '-display', 'none', '-M', 'malta', '-m', '{memory}',
+            '-kernel', '{kernel}',
+            '-hda', '{snapshot_path}',
+            '-append', 'root=/dev/sda1 console=tty0',
+            '-netdev', 'tap,id=net_{vmname},ifname=tap_{vmname},script=no,downscript=no',
+            '-device', 'e1000,netdev=net_{vmname},mac={mac}',  # virtio-net-pci doesn't work here
         ],
-        "params": {
-            "kernel": "{imagepath}/vmlinux-3.2.0-4-4kc-malta-mipsel",
+        'params': {
+            'kernel': '{imagepath}/vmlinux-3.2.0-4-4kc-malta-mipsel',
         }
     },
-    "mips": {
-        "cmdline": [
-            "qemu-system-mips", "-display", "none", "-M", "malta", "-m", "{memory}",
-            "-kernel", "{kernel}",
-            "-hda", "{snapshot_path}",
-            "-append", "root=/dev/sda1 console=tty0",
-            "-netdev", "tap,id=net_{vmname},ifname=tap_{vmname},script=no,downscript=no",
-            "-device", "e1000,netdev=net_{vmname},mac={mac}",  # virtio-net-pci doesn't work here
+    'mips': {
+        'cmdline': [
+            'qemu-system-mips', '-display', 'none', '-M', 'malta', '-m', '{memory}',
+            '-kernel', '{kernel}',
+            '-hda', '{snapshot_path}',
+            '-append', 'root=/dev/sda1 console=tty0',
+            '-netdev', 'tap,id=net_{vmname},ifname=tap_{vmname},script=no,downscript=no',
+            '-device', 'e1000,netdev=net_{vmname},mac={mac}',  # virtio-net-pci doesn't work here
         ],
-        "params": {
-            "kernel": "{imagepath}/vmlinux-3.2.0-4-4kc-malta-mips",
+        'params': {
+            'kernel': '{imagepath}/vmlinux-3.2.0-4-4kc-malta-mips',
         }
     },
-    "armwrt": {
-        "cmdline": [
-            "qemu-system-arm", "-display", "none", "-M", "realview-eb-mpcore", "-m", "{memory}",
-            "-kernel", "{kernel}",
-            "-drive", "if=sd,cache=unsafe,file={snapshot_path}",
-            "-append", "console=ttyAMA0 root=/dev/mmcblk0 rootwait",
-            "-net", "tap,ifname=tap_{vmname},script=no,downscript=no", "-net", "nic,macaddr={mac}",  # this by default needs /etc/qemu-ifup to add the tap to the bridge, slightly awkward
+    'armwrt': {
+        'cmdline': [
+            'qemu-system-arm', '-display', 'none', '-M', 'realview-eb-mpcore', '-m', '{memory}',
+            '-kernel', '{kernel}',
+            '-drive', 'if=sd,cache=unsafe,file={snapshot_path}',
+            '-append', 'console=ttyAMA0 root=/dev/mmcblk0 rootwait',
+            '-net', 'tap,ifname=tap_{vmname},script=no,downscript=no', '-net', 'nic,macaddr={mac}',  # this by default needs /etc/qemu-ifup to add the tap to the bridge, slightly awkward
         ],
-        "params": {
-            "kernel": "{imagepath}/openwrt-realview-vmlinux.elf",
+        'params': {
+            'kernel': '{imagepath}/openwrt-realview-vmlinux.elf',
         }
     },
-    "arm": {
-        "cmdline": [
-            "qemu-system-arm", "-display", "none", "-M", "versatilepb", "-m", "{memory}",
-            "-kernel", "{kernel}", "-initrd", "{initrd}",
-            "-hda", "{snapshot_path}",
-            "-append", "root=/dev/sda1",
-            "-net", "tap,ifname=tap_{vmname},script=no,downscript=no", "-net", "nic,macaddr={mac}",  # this by default needs /etc/qemu-ifup to add the tap to the bridge, slightly awkward
+    'arm': {
+        'cmdline': [
+            'qemu-system-arm', '-display', 'none', '-M', 'versatilepb', '-m', '{memory}',
+            '-kernel', '{kernel}', '-initrd', '{initrd}',
+            '-hda', '{snapshot_path}',
+            '-append', 'root=/dev/sda1',
+            '-net', 'tap,ifname=tap_{vmname},script=no,downscript=no', '-net', 'nic,macaddr={mac}',  # this by default needs /etc/qemu-ifup to add the tap to the bridge, slightly awkward
         ],
-        "params": {
-            "memory": "256M",  # 512 didn't work for some reason
-            "kernel": "{imagepath}/vmlinuz-3.2.0-4-versatile-arm",
-            "initrd": "{imagepath}/initrd-3.2.0-4-versatile-arm",
+        'params': {
+            'memory': '256M',  # 512 didn't work for some reason
+            'kernel': '{imagepath}/vmlinuz-3.2.0-4-versatile-arm',
+            'initrd': '{imagepath}/initrd-3.2.0-4-versatile-arm',
         }
     },
-    "x64": {
-        "cmdline": [
-            "qemu-system-x86_64", "-display", "none", "-m", "{memory}",
-            "-hda", "{snapshot_path}",
-            "-net", "tap,ifname=tap_{vmname},script=no,downscript=no", "-net", "nic,macaddr={mac}",  # this by default needs /etc/qemu-ifup to add the tap to the bridge, slightly awkward
+    'x64': {
+        'cmdline': [
+            'qemu-system-x86_64', '-display', 'none', '-m', '{memory}',
+            '-hda', '{snapshot_path}',
+            '-net', 'tap,ifname=tap_{vmname},script=no,downscript=no', '-net', 'nic,macaddr={mac}',  # this by default needs /etc/qemu-ifup to add the tap to the bridge, slightly awkward
         ],
-        "params": {
-            "memory": "1024M",
+        'params': {
+            'memory': '1024M',
         }
     },
-    "x86": {
-        "cmdline": [
-            "qemu-system-i386", "-display", "none", "-m", "{memory}",
-            "-hda", "{snapshot_path}",
-            "-net", "tap,ifname=tap_{vmname},script=no,downscript=no", "-net", "nic,macaddr={mac}",  # this by default needs /etc/qemu-ifup to add the tap to the bridge, slightly awkward
+    'x86': {
+        'cmdline': [
+            'qemu-system-i386', '-display', 'none', '-m', '{memory}',
+            '-hda', '{snapshot_path}',
+            '-net', 'tap,ifname=tap_{vmname},script=no,downscript=no', '-net', 'nic,macaddr={mac}',  # this by default needs /etc/qemu-ifup to add the tap to the bridge, slightly awkward
         ],
-        "params": {
-            "memory": "1024M",
+        'params': {
+            'memory': '1024M',
         }
     },
 }
+
 
 class QEMU(Machinery):
     """Virtualization layer for QEMU (non-KVM)."""
 
     # VM states.
-    RUNNING = "running"
-    STOPPED = "stopped"
-    ERROR = "machete"
+    RUNNING = 'running'
+    STOPPED = 'stopped'
+    ERROR = 'machete'
 
     def __init__(self):
         super(QEMU, self).__init__()
@@ -117,27 +117,29 @@ class QEMU(Machinery):
 
     def _initialize_check(self):
         """Run all checks when a machine manager is initialized.
+
         @raise CuckooMachineError: if QEMU binary is not found.
         """
         # VirtualBox specific checks.
         if not self.options.qemu.path:
-            raise CuckooCriticalError("QEMU binary path missing, "
-                                      "please add it to the config file")
+            raise CuckooCriticalError('QEMU binary path missing, '
+                                      'please add it to the config file')
         if not os.path.exists(self.options.qemu.path):
-            raise CuckooCriticalError("QEMU binary not found at "
-                                      "specified path \"%s\"" %
+            raise CuckooCriticalError('QEMU binary not found at '
+                                      'specified path "%s"' %
                                       self.options.qemu.path)
 
         self.qemu_dir = os.path.dirname(self.options.qemu.path)
-        self.qemu_img = os.path.join(self.qemu_dir, "qemu-img")
+        self.qemu_img = os.path.join(self.qemu_dir, 'qemu-img')
 
     def start(self, label, task):
         """Start a virtual machine.
+
         @param label: virtual machine label.
         @param task: task object.
         @raise CuckooMachineError: if unable to start.
         """
-        log.debug("Starting vm %s" % label)
+        log.debug('Starting vm %s' % label)
 
         vm_info = self.db.view_machine_by_label(label)
         vm_options = getattr(self.options, vm_info.name)
@@ -147,7 +149,7 @@ class QEMU(Machinery):
         else:
             snapshot_path = os.path.join(
                 os.path.dirname(vm_options.image),
-                "snapshot_%s.qcow2" % vm_info.name
+                'snapshot_%s.qcow2' % vm_info.name
             )
             if os.path.exists(snapshot_path):
                 os.remove(snapshot_path)
@@ -156,32 +158,32 @@ class QEMU(Machinery):
             # qcow2 with backing file
             try:
                 proc = subprocess.Popen([
-                    self.qemu_img, "create", "-f", "qcow2",
-                    "-b", vm_options.image, snapshot_path
+                    self.qemu_img, 'create', '-f', 'qcow2',
+                    '-b', vm_options.image, snapshot_path
                 ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 output, err = proc.communicate()
                 if err:
                     raise OSError(err)
             except OSError as e:
                 raise CuckooMachineError(
-                    "QEMU failed starting the machine: %s" % e
+                    'QEMU failed starting the machine: %s' % e
                 )
 
-        vm_arch = getattr(vm_options, "arch", "default")
+        vm_arch = getattr(vm_options, 'arch', 'default')
         arch_config = dict(QEMU_ARGS[vm_arch])
-        cmdline = arch_config["cmdline"]
-        params = dict(QEMU_ARGS["default"]["params"])
-        params.update(QEMU_ARGS[vm_arch]["params"])
+        cmdline = arch_config['cmdline']
+        params = dict(QEMU_ARGS['default']['params'])
+        params.update(QEMU_ARGS[vm_arch]['params'])
 
         params.update({
-            "imagepath": os.path.dirname(vm_options.image),
-            "snapshot_path": snapshot_path,
-            "vmname": vm_info.name,
+            'imagepath': os.path.dirname(vm_options.image),
+            'snapshot_path': snapshot_path,
+            'vmname': vm_info.name,
         })
 
         # allow some overrides from the vm specific options
         # also do another round of parameter formatting
-        for var in ["mac", "kernel", "initrd"]:
+        for var in ['mac', 'kernel', 'initrd']:
             val = getattr(vm_options, var, params.get(var, None))
             if not val:
                 continue
@@ -191,51 +193,53 @@ class QEMU(Machinery):
         final_cmdline = [i.format(**params) for i in cmdline]
 
         if vm_options.snapshot:
-            final_cmdline += ["-loadvm", vm_options.snapshot]
+            final_cmdline += ['-loadvm', vm_options.snapshot]
 
         if vm_options.enable_kvm:
-            final_cmdline.append("-enable-kvm")
+            final_cmdline.append('-enable-kvm')
 
-        log.debug("Executing QEMU %r", final_cmdline)
+        log.debug('Executing QEMU %r', final_cmdline)
 
         try:
             proc = subprocess.Popen(final_cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.state[vm_info.name] = proc
         except OSError as e:
-            raise CuckooMachineError("QEMU failed starting the machine: %s" % e)
+            raise CuckooMachineError('QEMU failed starting the machine: %s' % e)
 
     def stop(self, label):
         """Stop a virtual machine.
+
         @param label: virtual machine label.
         @raise CuckooMachineError: if unable to stop.
         """
-        log.debug("Stopping vm %s" % label)
+        log.debug('Stopping vm %s' % label)
 
         vm_info = self.db.view_machine_by_label(label)
 
         if self._status(vm_info.name) == self.STOPPED:
-            raise CuckooMachineError("Trying to stop an already stopped vm %s" % label)
+            raise CuckooMachineError('Trying to stop an already stopped vm %s' % label)
 
         proc = self.state.get(vm_info.name, None)
         proc.kill()
 
         stop_me = 0
         while proc.poll() is None:
-            if stop_me < config("cuckoo:timeouts:vm_state"):
+            if stop_me < config('cuckoo:timeouts:vm_state'):
                 time.sleep(1)
                 stop_me += 1
             else:
-                log.debug("Stopping vm %s timeouted. Killing" % label)
+                log.debug('Stopping vm %s timeouted. Killing' % label)
                 proc.terminate()
                 time.sleep(1)
 
-        # if proc.returncode != 0 and stop_me < config("cuckoo:timeouts:vm_state"):
-        #     log.debug("QEMU exited with error powering off the machine")
+        # if proc.returncode != 0 and stop_me < config('cuckoo:timeouts:vm_state'):
+        #     log.debug('QEMU exited with error powering off the machine')
 
         self.state[vm_info.name] = None
 
     def _status(self, name):
         """Get current status of a vm.
+
         @param name: virtual machine name.
         @return: status string.
         """

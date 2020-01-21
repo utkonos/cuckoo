@@ -3,7 +3,6 @@
 # Copyright (C) 2013 Christopher Schmitt <cschmitt@tankbusta.net>
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 try:
     import libvirt
     HAVE_LIBVIRT = True
@@ -14,19 +13,21 @@ from cuckoo.common.abstracts import LibVirtMachinery
 from cuckoo.common.exceptions import CuckooCriticalError
 from cuckoo.common.exceptions import CuckooMachineError
 
+
 class ESX(LibVirtMachinery):
     """Virtualization layer for ESXi/ESX based on python-libvirt."""
 
     def _initialize_check(self):
         """Run all checks when a machine manager is initialized.
+
         @raise CuckooMachineError: if configuration is invalid
         """
         if not self.options.esx.dsn:
-            raise CuckooMachineError("ESX(i) DSN is missing, please add it to the config file")
+            raise CuckooMachineError('ESX(i) DSN is missing, please add it to the config file')
         if not self.options.esx.username:
-            raise CuckooMachineError("ESX(i) username is missing, please add it to the config file")
+            raise CuckooMachineError('ESX(i) username is missing, please add it to the config file')
         if not self.options.esx.password:
-            raise CuckooMachineError("ESX(i) password is missing, please add it to the config file")
+            raise CuckooMachineError('ESX(i) password is missing, please add it to the config file')
 
         self.dsn = self.options.esx.dsn
         self.global_conn = self._global_connect()
@@ -39,7 +40,7 @@ class ESX(LibVirtMachinery):
             elif credential[0] == libvirt.VIR_CRED_NOECHOPROMPT:
                 credential[4] = self.options.esx.password
             else:
-                raise CuckooCriticalError("ESX machinery did not recieve an object to inject a username or password into")
+                raise CuckooCriticalError('ESX machinery did not recieve an object to inject a username or password into')
 
         return 0
 
@@ -55,7 +56,7 @@ class ESX(LibVirtMachinery):
             self.auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_NOECHOPROMPT], self._auth_callback, None]
             return libvirt.openAuth(self.dsn, self.auth, 0)
         except libvirt.libvirtError as libvex:
-            raise CuckooCriticalError("libvirt returned an exception on connection: %s" % libvex)
+            raise CuckooCriticalError('libvirt returned an exception on connection: %s' % libvex)
 
     def _disconnect(self, conn):
         """Using one global connection we now disconnect in the destructor, ignore requests to disconnect."""
