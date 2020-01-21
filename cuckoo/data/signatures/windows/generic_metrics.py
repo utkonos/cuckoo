@@ -2,22 +2,22 @@
 # Copyright (C) 2014-2016 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 from cuckoo.common.abstracts import Signature
 
+
 class SystemMetrics(Signature):
-    name = "generic_metrics"
-    description = "Uses GetSystemMetrics"
+    name = 'generic_metrics'
+    description = 'Uses GetSystemMetrics'
     severity = 2
-    categories = ["generic"]
-    authors = ["Cuckoo Developers"]
-    minimum = "2.0"
+    categories = ['generic']
+    authors = ['Cuckoo Developers']
+    minimum = '2.0'
 
     # Evented signatures can specify filters that reduce the amount of
     # API calls that are streamed in. One can filter Process name, API
     # name/identifier and category.
     filter_processnames = ()
-    filter_apinames = "GetSystemMetrics",
+    filter_apinames = 'GetSystemMetrics',
     filter_categories = ()
 
     # This is a signature template. It should be used as a skeleton for
@@ -40,7 +40,7 @@ class SystemMetrics(Signature):
     def on_call(self, call, pid, tid):
         # This check would in reality not be needed as we already make use
         # of filter_apinames above.
-        if call["api"] == "GetSystemMetrics":
+        if call['api'] == 'GetSystemMetrics':
             # Signature matched, return True.
             return True
 
