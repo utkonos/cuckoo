@@ -2,7 +2,6 @@
 # Copyright (C) 2014-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import collections
 import json
 import logging
@@ -18,31 +17,34 @@ from .platform.linux import LinuxSystemTap
 
 log = logging.getLogger(__name__)
 
+
 class Summary(BehaviorHandler):
     """Generate overview summary information (not split by process)."""
 
-    key = "summary"
-    event_types = ["generic"]
+    key = 'summary'
+    event_types = ['generic']
 
     def __init__(self, *args, **kwargs):
         super(Summary, self).__init__(*args, **kwargs)
         self.results = collections.defaultdict(set)
 
     def handle_event(self, event):
-        self.results[event["category"]].add(event["value"])
+        self.results[event['category']].add(event['value'])
 
     def run(self):
         for key, value in self.results.items():
             self.results[key] = list(value)
         return self.results
 
+
 class Anomaly(BehaviorHandler):
     """Anomaly detected during analysis.
+
     For example: a malware tried to remove Cuckoo's hooks.
     """
 
-    key = "anomaly"
-    event_types = ["anomaly"]
+    key = 'anomaly'
+    event_types = ['anomaly']
 
     def __init__(self, *args, **kwargs):
         super(Anomaly, self).__init__(*args, **kwargs)
@@ -50,21 +52,22 @@ class Anomaly(BehaviorHandler):
 
     def handle_event(self, call):
         """Process API calls.
+
         @param call: API call object
         @param process: process object
         """
         category, funcname, message = None, None, None
-        for row in call["arguments"]:
-            if row["name"] == "Subcategory":
-                category = row["value"]
-            if row["name"] == "FunctionName":
-                funcname = row["value"]
-            if row["name"] == "Message":
-                message = row["value"]
+        for row in call['arguments']:
+            if row['name'] == 'Subcategory':
+                category = row['value']
+            if row['name'] == 'FunctionName':
+                funcname = row['value']
+            if row['name'] == 'Message':
+                message = row['value']
 
         self.anomalies.append(dict(
-            # name=process["process_name"],
-            # pid=process["process_id"],
+            # name=process['process_name'],
+            # pid=process['process_id'],
             category=category,
             funcname=funcname,
             message=message,
@@ -74,103 +77,108 @@ class Anomaly(BehaviorHandler):
         """Fetch all anomalies."""
         return self.anomalies
 
+
 class ProcessTree(BehaviorHandler):
     """Generates process tree."""
 
-    key = "processtree"
-    event_types = ["process"]
+    key = 'processtree'
+    event_types = ['process']
 
     def __init__(self, *args, **kwargs):
         super(ProcessTree, self).__init__(*args, **kwargs)
         self.processes = {}
 
     def handle_event(self, process):
-        if process["pid"] in self.processes:
+        if process['pid'] in self.processes:
             log.warning(
-                "Found the same process identifier twice, this "
-                "shouldn't happen!"
+                'Found the same process identifier twice, this '
+                'shouldn\'t happen!'
             )
             return
 
-        self.processes[process["pid"]] = {
-            "pid": process["pid"],
-            "ppid": process["ppid"],
-            "process_name": process["process_name"],
-            "command_line": process.get("command_line"),
-            "first_seen": process["first_seen"],
-            "children": [],
-            "track": process.get("track", True),
+        self.processes[process['pid']] = {
+            'pid': process['pid'],
+            'ppid': process['ppid'],
+            'process_name': process['process_name'],
+            'command_line': process.get('command_line'),
+            'first_seen': process['first_seen'],
+            'children': [],
+            'track': process.get('track', True),
         }
 
     def run(self):
         root = {
-            "children": [],
+            'children': [],
         }
-        first_seen = lambda x: x["first_seen"]
+        first_seen = lambda x: x['first_seen']
         procs_seen = []
 
         for p in sorted(self.processes.values(), key=first_seen):
-            if p["ppid"] in procs_seen:
-                self.processes[p["ppid"]]["children"].append(p)
+            if p['ppid'] in procs_seen:
+                self.processes[p['ppid']]['children'].append(p)
             else:
-                root["children"].append(p)
+                root['children'].append(p)
 
-            procs_seen.append(p["pid"])
+            procs_seen.append(p['pid'])
 
-        return sorted(root["children"], key=first_seen)
+        return sorted(root['children'], key=first_seen)
+
 
 class GenericBehavior(BehaviorHandler):
     """Generates summary information."""
 
-    key = "generic"
-    event_types = ["process", "generic"]
+    key = 'generic'
+    event_types = ['process', 'generic']
 
     def __init__(self, *args, **kwargs):
         super(GenericBehavior, self).__init__(*args, **kwargs)
         self.processes = {}
 
     def handle_process_event(self, process):
-        if process["pid"] in self.processes:
+        if process['pid'] in self.processes:
             return
 
-        self.processes[process["pid"]] = {
-            "pid": process["pid"],
-            "ppid": process["ppid"],
-            "process_name": process["process_name"],
-            "process_path": process.get("process_path"),
-            "first_seen": process["first_seen"],
-            "summary": collections.defaultdict(set),
+        self.processes[process['pid']] = {
+            'pid': process['pid'],
+            'ppid': process['ppid'],
+            'process_name': process['process_name'],
+            'process_path': process.get('process_path'),
+            'first_seen': process['first_seen'],
+            'summary': collections.defaultdict(set),
         }
 
     def handle_generic_event(self, event):
-        if event["pid"] in self.processes:
+        if event['pid'] in self.processes:
             # TODO: rewrite / generalize / more flexible
-            pid, category = event["pid"], event["category"]
-            self.processes[pid]["summary"][category].add(event["value"])
+            pid, category = event['pid'], event['category']
+            self.processes[pid]['summary'][category].add(event['value'])
         else:
-            log.warning("Generic event for unknown process id %u", event["pid"])
+            log.warning('Generic event for unknown process id %u', event['pid'])
 
     def run(self):
         for process in self.processes.values():
-            for key, value in process["summary"].items():
-                process["summary"][key] = list(value)
+            for key, value in process['summary'].items():
+                process['summary'][key] = list(value)
 
         return self.processes.values()
 
+
 class ApiStats(BehaviorHandler):
     """Counts API calls."""
-    key = "apistats"
-    event_types = ["apicall"]
+
+    key = 'apistats'
+    event_types = ['apicall']
 
     def __init__(self, *args, **kwargs):
         super(ApiStats, self).__init__(*args, **kwargs)
         self.processes = collections.defaultdict(lambda: collections.defaultdict(lambda: 0))
 
     def handle_event(self, event):
-        self.processes["%d" % event["pid"]][event["api"]] += 1
+        self.processes['%d' % event['pid']][event['api']] += 1
 
     def run(self):
         return self.processes
+
 
 class RebootInformation(BehaviorHandler):
     """Provides specific information useful for reboot analysis.
@@ -180,51 +188,55 @@ class RebootInformation(BehaviorHandler):
     interpreted when doing a reboot analysis.
     """
 
-    event_types = ["reboot"]
+    event_types = ['reboot']
 
     def __init__(self, *args, **kwargs):
         super(RebootInformation, self).__init__(*args, **kwargs)
         self.events = []
 
     def handle_event(self, event):
-        self.events.append((event["time"], event))
+        self.events.append((event['time'], event))
 
     def run(self):
-        reboot_path = os.path.join(self.analysis.analysis_path, "reboot.json")
-        with open(reboot_path, "wb") as f:
+        reboot_path = os.path.join(self.analysis.analysis_path, 'reboot.json')
+        with open(reboot_path, 'wb') as f:
             for ts, event in sorted(self.events):
-                f.write("%s\n" % json.dumps(event))
+                f.write('%s\n' % json.dumps(event))
+
 
 class ActionInformation(BehaviorHandler):
     """Dumps feedback to the user to improve the sandboxing experience."""
 
-    event_types = ["action"]
+    event_types = ['action']
 
     def __init__(self, *args, **kwargs):
         super(ActionInformation, self).__init__(*args, **kwargs)
         self.actions = []
 
     def handle_event(self, event):
-        self.actions.append(event["action"])
+        self.actions.append(event['action'])
 
     def run(self):
         for action in set(self.actions):
-            Database().add_error("", self.analysis.task["id"], action)
+            Database().add_error('', self.analysis.task['id'], action)
+
 
 class ExtractScripts(BehaviorHandler):
     """Extracts embedded scripts in command-line parameters."""
-    key = "extracted"
-    event_types = ["process"]
+
+    key = 'extracted'
+    event_types = ['process']
 
     def __init__(self, *args, **kwargs):
         super(ExtractScripts, self).__init__(*args, **kwargs)
-        self.ex = ExtractManager.for_task(self.analysis.task["id"])
+        self.ex = ExtractManager.for_task(self.analysis.task['id'])
 
     def handle_event(self, process):
-        self.ex.push_command_line(process["command_line"], process)
+        self.ex.push_command_line(process['command_line'], process)
 
     def run(self):
         pass
+
 
 class BehaviorAnalysis(Processing):
     """Behavior Analyzer.
@@ -252,35 +264,36 @@ class BehaviorAnalysis(Processing):
     if multiple are enabled).
     """
 
-    key = "behavior"
+    key = 'behavior'
 
     def _enum_logs(self):
         """Enumerate all behavior logs."""
         if not os.path.exists(self.logs_path):
-            log.warning("Analysis results folder does not exist at path %r.", self.logs_path)
+            log.warning('Analysis results folder does not exist at path %r.', self.logs_path)
             return
 
         logs = os.listdir(self.logs_path)
         if not logs:
-            log.warning("Analysis results folder does not contain any behavior log files.")
+            log.warning('Analysis results folder does not contain any behavior log files.')
             return
 
         for fname in logs:
             path = os.path.join(self.logs_path, fname)
             if not os.path.isfile(path):
-                log.warning("Behavior log file %r is not a file.", fname)
+                log.warning('Behavior log file %r is not a file.', fname)
                 continue
 
-            limit = config("cuckoo:processing:analysis_size_limit")
+            limit = config('cuckoo:processing:analysis_size_limit')
             if limit and os.stat(path).st_size > limit:
                 # This needs to be a big alert.
-                log.critical("Behavior log file %r is too big, skipped.", fname)
+                log.critical('Behavior log file %r is too big, skipped.', fname)
                 continue
 
             yield path
 
     def run(self):
         """Run analysis.
+
         @return: results dict.
         """
         self.state = {}
@@ -294,7 +307,7 @@ class BehaviorAnalysis(Processing):
             ApiStats(self),
 
             # platform specific stuff
-            WindowsMonitor(self, task_id=self.task["id"]),
+            WindowsMonitor(self, task_id=self.task['id']),
             LinuxSystemTap(self),
 
             # Reboot information.
@@ -310,11 +323,11 @@ class BehaviorAnalysis(Processing):
         # doesn't really work if there's no task, let's rely on the file name for now
         # # certain handlers only makes sense for a specific platform
         # # this allows us to use the same filenames/formats without confusion
-        # if self.task.machine.platform == "windows":
+        # if self.task.machine.platform == 'windows':
         #     handlers += [
         #         WindowsMonitor(self),
         #     ]
-        # elif self.task.machine.platform == "linux":
+        # elif self.task.machine.platform == 'linux':
         #     handlers += [
         #         LinuxSystemTap(self),
         #     ]
@@ -328,8 +341,8 @@ class BehaviorAnalysis(Processing):
 
                 # If available go for the specific event type handler rather
                 # than the generic handle_event.
-                if hasattr(h, "handle_%s_event" % event_type):
-                    fn = getattr(h, "handle_%s_event" % event_type)
+                if hasattr(h, 'handle_%s_event' % event_type):
+                    fn = getattr(h, 'handle_%s_event' % event_type)
                     interest_map[event_type].append(fn)
                 elif h.handle_event not in interest_map[event_type]:
                     interest_map[event_type].append(h.handle_event)
@@ -346,7 +359,7 @@ class BehaviorAnalysis(Processing):
                 # ... and then let it parse the file
                 for event in handler.parse(path):
                     # pass down the parsed message to interested handlers
-                    for hhandler in interest_map.get(event["type"], []):
+                    for hhandler in interest_map.get(event['type'], []):
                         res = hhandler(event)
                         # We support one layer of "generating" new events,
                         # which we'll pass on again (in case the handler
@@ -355,7 +368,7 @@ class BehaviorAnalysis(Processing):
                             continue
 
                         for subevent in res:
-                            for hhandler2 in interest_map.get(subevent["type"], []):
+                            for hhandler2 in interest_map.get(subevent['type'], []):
                                 hhandler2(subevent)
 
         behavior = {}
@@ -368,6 +381,6 @@ class BehaviorAnalysis(Processing):
 
                 behavior[handler.key] = r
             except:
-                log.exception("Failed to run partial behavior class \"%s\"", handler.key)
+                log.exception('Failed to run partial behavior class "%s"', handler.key)
 
         return behavior

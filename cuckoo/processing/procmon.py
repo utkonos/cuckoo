@@ -1,11 +1,11 @@
 # Copyright (C) 2016-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import os.path
 import xml.etree.ElementTree
 
 from cuckoo.common.abstracts import Processing
+
 
 class ProcmonLog(list):
     """Yield each API call event to the parent handler."""
@@ -16,10 +16,10 @@ class ProcmonLog(list):
 
     def __iter__(self):
         iterator = xml.etree.ElementTree.iterparse(
-            open(self.filepath, "rb"), events=["end"]
+            open(self.filepath, 'rb'), events=['end']
         )
         for _, element in iterator:
-            if element.tag != "event":
+            if element.tag != 'event':
                 continue
 
             entry = {}
@@ -31,13 +31,14 @@ class ProcmonLog(list):
         # For documentation on this please refer to MonitorProcessLog.
         return True
 
+
 class Procmon(Processing):
     """Extract events from procmon.exe output."""
 
-    key = "procmon"
+    key = 'procmon'
 
     def run(self):
-        procmon_xml = os.path.join(self.logs_path, "procmon.xml")
+        procmon_xml = os.path.join(self.logs_path, 'procmon.xml')
         if not os.path.exists(procmon_xml):
             return
 

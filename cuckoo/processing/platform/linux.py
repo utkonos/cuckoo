@@ -1,16 +1,15 @@
 # Copyright (C) 2015-2017 Cuckoo Foundation.
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
-
 import datetime
 import dateutil.parser
 import os
 import logging
-import re
 
 from cuckoo.common.abstracts import BehaviorHandler
 
 log = logging.getLogger(__name__)
+
 
 class FilteredProcessLog(list):
     def __init__(self, eventstream, **kwfilters):
@@ -23,17 +22,17 @@ class FilteredProcessLog(list):
                 if event[k] != v:
                     continue
 
-                del event["type"]
+                del event['type']
                 yield event
 
     def __nonzero__(self):
         return True
 
-class LinuxSystemTap(BehaviorHandler):
-    """Parses systemtap generated plaintext logs (see
-    stuff/systemtap/strace.stp)."""
 
-    key = "processes"
+class LinuxSystemTap(BehaviorHandler):
+    """Parses systemtap generated plaintext logs (see stuff/systemtap/strace.stp)."""
+
+    key = 'processes'
 
     def __init__(self, *args, **kwargs):
         super(LinuxSystemTap, self).__init__(*args, **kwargs)
@@ -43,18 +42,18 @@ class LinuxSystemTap(BehaviorHandler):
         self.matched = False
 
     def handles_path(self, path):
-        if path.endswith(".stap"):
+        if path.endswith('.stap'):
             self.matched = True
             return True
 
     def parse(self, path):
-        parser = StapParser(open(path, "rb"))
+        parser = StapParser(open(path, 'rb'))
 
         for syscall in parser:
             # syscall specific hooks
             self.pre_hook(syscall)
 
-            pid = syscall["pid"]
+            pid = syscall['pid']
 
             # skip first analyzer process
             if pid not in self.forkmap:
@@ -64,13 +63,13 @@ class LinuxSystemTap(BehaviorHandler):
                 p_pid = self.forkmap.get(pid, -1)
                 calls = FilteredProcessLog(parser, pid=pid)
                 self.processes.append({
-                    "type": "process",
-                    "pid": pid,
-                    "ppid": p_pid,
-                    "process_name": syscall["process_name"],
-                    "first_seen": syscall["time"],
-                    "command_line": "",
-                    "calls": calls,
+                    'type': 'process',
+                    'pid': pid,
+                    'ppid': p_pid,
+                    'process_name': syscall['process_name'],
+                    'first_seen': syscall['time'],
+                    'command_line': '',
+                    'calls': calls,
                 })
 
             self.post_hook(syscall)
@@ -78,36 +77,37 @@ class LinuxSystemTap(BehaviorHandler):
         return self.processes
 
     def pre_hook(self, syscall):
-        if syscall["api"] == "clone":
-            self.forkmap[int(syscall["return_value"])] = syscall["pid"]
+        if syscall['api'] == 'clone':
+            self.forkmap[int(syscall['return_value'])] = syscall['pid']
 
     def post_hook(self, syscall):
-        if syscall["api"] == "execve":
-            pid = self.get_proc(syscall["pid"])
+        if syscall['api'] == 'execve':
+            pid = self.get_proc(syscall['pid'])
 
             # only update proc info after first succesful execve in this pid
-            if not syscall["return_value"] and not pid["command_line"]:
-                pid["process_name"] = os.path.basename(
-                    str(syscall["arguments"]["p0"])
+            if not syscall['return_value'] and not pid['command_line']:
+                pid['process_name'] = os.path.basename(
+                    str(syscall['arguments']['p0'])
                 )
-                pid["command_line"] = " ".join(syscall["arguments"]["p1"])
+                pid['command_line'] = ' '.join(syscall['arguments']['p1'])
 
     def get_proc(self, pid):
         for process in self.processes:
-            if process["pid"] == pid:
+            if process['pid'] == pid:
                 return process
 
     def is_newpid(self, pid):
-        return not any(p["pid"] == pid for p in self.processes)
+        return not any(p['pid'] == pid for p in self.processes)
 
     def run(self):
         if not self.matched:
             return
 
-        self.processes.sort(key=lambda process: process["first_seen"])
+        self.processes.sort(key=lambda process: process['first_seen'])
         return self.processes
 
-class StapParser(object):
+
+class StapParser:
     """Handle .stap logs from the Linux analyzer."""
 
     def __init__(self, fd):
@@ -122,11 +122,11 @@ class StapParser(object):
             datetimepart, r = line[:31], line[32:]
 
             # incredibly sophisticated date time handling
-            dtms = datetime.timedelta(0, 0, int(datetimepart.split(".", 1)[1]))
-            dt = dateutil.parser.parse(datetimepart.split(".", 1)[0]) + dtms
+            dtms = datetime.timedelta(0, 0, int(datetimepart.split('.', 1)[1]))
+            dt = dateutil.parser.parse(datetimepart.split('.', 1)[0]) + dtms
 
             parts = []
-            for delim in ("@", "[", "]", "(", ")", "= ", " (", ")"):
+            for delim in ('@', '[', ']', '(', ')', '= ', ' (', ')'):
                 part, _, r = r.strip().partition(delim)
                 parts.append(part)
 
@@ -136,31 +136,31 @@ class StapParser(object):
             pid = int(pid) if pid.isdigit() else -1
 
             yield {
-                "time": dt, "process_name": pname, "pid": pid,
-                "instruction_pointer": ip, "api": fn, "arguments": arguments,
-                "return_value": retval, "status": ecode,
-                "type": "apicall", "raw": line,
+                'time': dt, 'process_name': pname, 'pid': pid,
+                'instruction_pointer': ip, 'api': fn, 'arguments': arguments,
+                'return_value': retval, 'status': ecode,
+                'type': 'apicall', 'raw': line,
             }
 
     def parse_args(self, args):
         p_args, n_args = {}, 0
 
         while args:
-            args = args.lstrip(", ")
+            args = args.lstrip(', ')
             delim = self.get_delim(args)
             arg, _, args = args.partition(delim)
-            p_args["p%u" % n_args] = self.parse_arg(arg)
+            p_args['p%u' % n_args] = self.parse_arg(arg)
             n_args += 1
 
         return p_args
 
     def get_delim(self, argstr):
         if self.is_array(argstr):
-            return "]"
+            return ']'
         elif self.is_struct(argstr):
-            return "}"
+            return '}'
         else:
-            return ", "
+            return ', '
 
     def parse_arg(self, argstr):
         if self.is_array(argstr):
@@ -173,34 +173,34 @@ class StapParser(object):
             return argstr
 
     def parse_array(self, argstr):
-        return [self.parse_arg(a) for a in argstr.lstrip("[").split(", ")]
+        return [self.parse_arg(a) for a in argstr.lstrip('[').split(', ')]
 
     def parse_struct(self, argstr):
         # Return as regular array if elements aren't named.
-        if "=" not in argstr:
-            return self.parse_array(argstr.lstrip("{"))
+        if '=' not in argstr:
+            return self.parse_array(argstr.lstrip('{'))
 
         # Return as dict, parse value as array and struct when appropriate.
         parsed = {}
-        arg = argstr.lstrip("{")
+        arg = argstr.lstrip('{')
         while arg:
-            key, _, arg = arg.partition("=")
+            key, _, arg = arg.partition('=')
             delim = self.get_delim(arg)
-            if delim != ", ":
-                delim += ", "
+            if delim != ', ':
+                delim += ', '
             val, _, arg = arg.partition(delim)
             parsed[key] = self.parse_arg(val)
 
         return parsed
 
     def parse_string(self, argstr):
-        return argstr.strip("\"").decode("string_escape").decode("latin-1")
+        return argstr.strip('"').decode('string_escape').decode('latin-1')
 
     def is_array(self, arg):
-        return arg.startswith("[") and not arg.startswith("[/*")
+        return arg.startswith('[') and not arg.startswith('[/*')
 
     def is_struct(self, arg):
-        return arg.startswith("{")
+        return arg.startswith('{')
 
     def is_string(self, arg):
-        return arg.startswith("\"") and arg.endswith("\"")
+        return arg.startswith('"') and arg.endswith('"')
