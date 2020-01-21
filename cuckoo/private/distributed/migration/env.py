@@ -6,7 +6,7 @@ from cuckoo.distributed.misc import init_settings, settings
 
 from cuckoo.misc import set_cwd
 
-set_cwd(context.get_x_argument(as_dictionary=True)["cwd"])
+set_cwd(context.get_x_argument(as_dictionary=True)['cwd'])
 init_settings()
 
 config = context.config
